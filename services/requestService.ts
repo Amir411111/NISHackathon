@@ -19,7 +19,7 @@ type RequestDto = {
   workerId: string | null;
   createdAt: string;
   updatedAt: string;
-  slaDeadline: string;
+  slaDeadline?: string | null;
   isOverdue: boolean;
   workStartedAt?: string | null;
   workEndedAt?: string | null;
@@ -60,20 +60,55 @@ function categoryFromBackendName(name?: string): Category {
   return "ROAD";
 }
 
+function normalizeMediaUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+
+  const trimmed = String(url).trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith("mock://") || trimmed.startsWith("data:") || trimmed.startsWith("file:") || trimmed.startsWith("blob:")) {
+    return trimmed;
+  }
+
+  const base = String(apiClient.defaults.baseURL || "").trim();
+  if (trimmed.startsWith("/")) {
+    return base ? `${base.replace(/\/$/, "")}${trimmed}` : trimmed;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    if (Platform.OS !== "web" && /https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(trimmed) && base) {
+      try {
+        const inUrl = new URL(trimmed);
+        const baseUrl = new URL(base);
+        return `${baseUrl.protocol}//${baseUrl.host}${inUrl.pathname}${inUrl.search}`;
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+
+  return base ? `${base.replace(/\/$/, "")}/${trimmed.replace(/^\/+/, "")}` : trimmed;
+}
+
 function mapDto(dto: RequestDto): Request {
+  const beforePhoto = normalizeMediaUrl(dto.photosBefore?.[0]);
+  const afterPhoto = normalizeMediaUrl(dto.photosAfter?.[0]);
+
   return {
     id: dto.id,
     category: categoryFromBackendName(dto.categoryName),
     description: dto.description,
-    photoUri: dto.photosBefore[0],
-    beforePhotoUri: dto.photosBefore[0],
-    afterPhotoUri: dto.photosAfter[0],
+    photoUri: beforePhoto,
+    beforePhotoUri: beforePhoto,
+    afterPhotoUri: afterPhoto,
     location: dto.location ? { lat: dto.location.lat, lon: dto.location.lng, accuracy: undefined } : undefined,
     addressLabel: undefined,
     status: dto.status,
     statusHistory: (dto.statusHistory || []).map((h) => ({ status: h.status, at: new Date(h.at).getTime(), by: roleFromBackend(h.by) })),
     createdAt: new Date(dto.createdAt).getTime(),
     updatedAt: new Date(dto.updatedAt).getTime(),
+    slaDeadline: dto.slaDeadline ? new Date(dto.slaDeadline).getTime() : undefined,
     assignedWorkerId: dto.workerId ?? undefined,
     priority: priorityFromBackend(dto.priority),
     reworkCount: dto.reworkCount ?? 0,
@@ -131,8 +166,7 @@ export async function createRequest(input: {
 
   const res = await apiClient.post<{ item: RequestDto }>(
     "/requests",
-    form,
-    Platform.OS === "web" ? undefined : { headers: { "Content-Type": "multipart/form-data" } }
+    form
   );
 
   return mapDto(res.data.item);
@@ -171,8 +205,7 @@ export async function completeTask(id: string, afterPhotoUri: string): Promise<R
   }
   const res = await apiClient.post<{ item: RequestDto }>(
     `/tasks/${id}/complete`,
-    form,
-    Platform.OS === "web" ? undefined : { headers: { "Content-Type": "multipart/form-data" } }
+    form
   );
   return mapDto(res.data.item);
 }
@@ -183,8 +216,8 @@ export async function adminListAll(): Promise<Request[]> {
   return res.data.items.map(mapDto);
 }
 
-export async function adminAssign(requestId: string, workerId: string): Promise<Request> {
-  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${requestId}/assign`, { workerId });
+export async function adminAssign(requestId: string, workerId: string, deadlineHours: number): Promise<Request> {
+  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${requestId}/assign`, { workerId, deadlineHours });
   return mapDto(res.data.item);
 }
 

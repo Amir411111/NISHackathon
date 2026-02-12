@@ -28,6 +28,7 @@ export default function AdminDispatcherScreen() {
 
   const [assignFor, setAssignFor] = useState<string | null>(null);
   const [assigningWorkerId, setAssigningWorkerId] = useState<string | null>(null);
+  const [deadlineHoursInput, setDeadlineHoursInput] = useState("24");
   const [assignedWorkerId, setAssignedWorkerId] = useState<string | null>(null);
   const [assignedWorkerName, setAssignedWorkerName] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<AdminTab>("ACTIVE");
@@ -36,6 +37,7 @@ export default function AdminDispatcherScreen() {
   const [penaltyInput, setPenaltyInput] = useState("0");
   const [rejecting, setRejecting] = useState(false);
   const assignInFlightRef = useRef(false);
+  const escalatedRef = useRef<Set<string>>(new Set());
 
   const selectedRequest = useMemo(() => (assignFor ? requests.find((r) => r.id === assignFor) : null), [assignFor, requests]);
   const activeRequests = useMemo(() => requests.filter((r) => r.status !== "DONE" && r.status !== "REJECTED"), [requests]);
@@ -82,6 +84,16 @@ export default function AdminDispatcherScreen() {
       alive = false;
     };
   }, [replaceWorkers]);
+
+  useEffect(() => {
+    const overdueNow = requests.filter((r) => isOverdue(r, now));
+    const newOverdue = overdueNow.filter((r) => !escalatedRef.current.has(r.id));
+    if (newOverdue.length > 0) {
+      for (const item of newOverdue) escalatedRef.current.add(item.id);
+      const top = newOverdue[0];
+      Alert.alert("Эскалация SLA", `Есть просроченные заявки (${overdueNow.length}). Проверьте: ${requestDisplayName(top)}.`);
+    }
+  }, [requests, isOverdue, now]);
 
   return (
     <Screen scroll={false}>
@@ -144,6 +156,17 @@ export default function AdminDispatcherScreen() {
               <Text style={styles.modalSub}>Заявка: {requestDisplayName(selectedRequest)}</Text>
             ) : null}
 
+            <Text style={styles.modalSub}>Дедлайн (часы от текущего времени, 1..720)</Text>
+            <TextInput
+              value={deadlineHoursInput}
+              onChangeText={(txt) => setDeadlineHoursInput(txt.replace(/[^\d]/g, ""))}
+              keyboardType="number-pad"
+              style={styles.input}
+              editable={!assigningWorkerId}
+              placeholder="24"
+              placeholderTextColor={ui.colors.textMuted}
+            />
+
             <View style={styles.workerList}>
               {workers.map((w) => (
                 <Pressable
@@ -157,11 +180,20 @@ export default function AdminDispatcherScreen() {
                     setAssignedWorkerId(null);
                     setAssignedWorkerName(null);
                     setAssigningWorkerId(w.id);
+
+                    const deadlineHours = Number(deadlineHoursInput);
+                    if (!Number.isInteger(deadlineHours) || deadlineHours < 1 || deadlineHours > 720) {
+                      Alert.alert("Некорректный дедлайн", "Введите целое число часов от 1 до 720.");
+                      setAssigningWorkerId(null);
+                      assignInFlightRef.current = false;
+                      return;
+                    }
+
                     try {
-                      const updated = await adminAssign(assignFor, w.id);
+                      const updated = await adminAssign(assignFor, w.id, deadlineHours);
                       upsertRequest(updated);
                     } catch {
-                      assignWorker({ requestId: assignFor, workerId: w.id });
+                      assignWorker({ requestId: assignFor, workerId: w.id, deadlineHours });
                     } finally {
                       setAssigningWorkerId(null);
                     }
@@ -170,6 +202,7 @@ export default function AdminDispatcherScreen() {
                     setAssignedWorkerName(w.name);
                     setTimeout(() => {
                       assignInFlightRef.current = false;
+                      setDeadlineHoursInput("24");
                       setAssignedWorkerId(null);
                       setAssignedWorkerName(null);
                       setAssignFor(null);

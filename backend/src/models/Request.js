@@ -44,7 +44,7 @@ const RequestSchema = new mongoose.Schema(
     citizenId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
 
-    slaDeadline: { type: Date, required: true },
+    slaDeadline: { type: Date, required: false, default: null },
     isOverdue: { type: Boolean, required: true, default: false },
 
     workStartedAt: { type: Date, default: null },

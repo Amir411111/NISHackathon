@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { ACTIVE_CITIZEN_BADGE_THRESHOLD, GAMIFICATION_POINTS_PER_CONFIRMED_REQUEST, SLA_IN_PROGRESS_MINUTES } from "@/constants/sla";
+import { ACTIVE_CITIZEN_BADGE_THRESHOLD, GAMIFICATION_POINTS_PER_CONFIRMED_REQUEST } from "@/constants/sla";
 import { MOCK_REQUESTS } from "@/mock/seed";
 import { logout as apiLogout, getMe, getStoredSession } from "@/services/authService";
 import type { AppUser, Category, Request, RequestLocation, RequestPriority, RequestStatus, UserRole, Worker } from "@/types/domain";
@@ -18,6 +18,7 @@ type CreateRequestInput = {
 type AssignInput = {
   requestId: string;
   workerId: string;
+  deadlineHours?: number;
 };
 
 type AppState = {
@@ -167,11 +168,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     return id;
   },
 
-  assignWorker: ({ requestId, workerId }) => {
+  assignWorker: ({ requestId, workerId, deadlineHours }) => {
     set((s) => ({
       requests: s.requests.map((r) => {
         if (r.id !== requestId) return r;
-        const updated = pushStatus({ ...r, assignedWorkerId: workerId }, "ASSIGNED", "ADMIN");
+        const deadline = Number.isFinite(deadlineHours) ? Date.now() + Number(deadlineHours) * 60 * 60 * 1000 : r.slaDeadline;
+        const updated = pushStatus({ ...r, assignedWorkerId: workerId, slaDeadline: deadline }, "ASSIGNED", "ADMIN");
         return updated;
       }),
     }));
@@ -243,20 +245,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   getWorkerById: (id) => get().workers.find((w) => w.id === id),
 
   isRequestOverdue: (r, now = Date.now()) => {
-    if (r.status !== "IN_PROGRESS") return false;
-    let startedAt = r.workStartedAt;
-    if (!startedAt) {
-      for (let i = r.statusHistory.length - 1; i >= 0; i--) {
-        const h = r.statusHistory[i];
-        if (h?.status === "IN_PROGRESS") {
-          startedAt = h.at;
-          break;
-        }
-      }
-    }
-    const effectiveStartedAt = startedAt ?? r.updatedAt;
-    const thresholdMs = SLA_IN_PROGRESS_MINUTES * 60 * 1000;
-    return now - effectiveStartedAt > thresholdMs;
+    if (!r.slaDeadline) return false;
+    if (r.status === "DONE" || r.status === "REJECTED") return false;
+    return now > r.slaDeadline;
   },
 
   getActiveCitizenBadge: () => {

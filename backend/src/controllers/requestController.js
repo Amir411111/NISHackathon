@@ -1,7 +1,7 @@
 const Category = require("../models/Category");
 const Request = require("../models/Request");
 const User = require("../models/User");
-const { computeIsOverdue, computeSlaDeadline } = require("../utils/sla");
+const { computeIsOverdue } = require("../utils/sla");
 const { saveUploadedFilesToMongo } = require("../utils/upload");
 
 async function ensureSystemCategories() {
@@ -72,7 +72,6 @@ async function createCitizenRequest(env, req, res) {
   const categoryId = await resolveCategoryId(category);
 
   const now = new Date();
-  const slaDeadline = computeSlaDeadline(p, now);
 
   const doc = await Request.create({
     categoryId,
@@ -85,7 +84,7 @@ async function createCitizenRequest(env, req, res) {
     statusHistory: [{ status: "ACCEPTED", at: now, by: "admin" }],
     citizenId: req.user.id,
     workerId: null,
-    slaDeadline,
+    slaDeadline: null,
     isOverdue: false,
   });
 
@@ -186,8 +185,13 @@ async function adminListAll(_env, req, res) {
 
 async function adminAssign(_env, req, res) {
   const id = req.params.id;
-  const { workerId } = req.body || {};
+  const { workerId, deadlineHours } = req.body || {};
   if (!workerId) return res.status(400).json({ error: "workerId is required" });
+
+  const hours = Number(deadlineHours);
+  if (!Number.isInteger(hours) || hours < 1 || hours > 720) {
+    return res.status(400).json({ error: "deadlineHours is required (1..720)" });
+  }
 
   const doc = await Request.findById(id);
   if (!doc) return res.status(404).json({ error: "Not found" });
@@ -195,9 +199,14 @@ async function adminAssign(_env, req, res) {
     return res.status(400).json({ error: "Closed request cannot be assigned" });
   }
 
+  const now = new Date();
+  const deadline = new Date(now.getTime() + hours * 60 * 60 * 1000);
+
   doc.workerId = workerId;
+  doc.slaDeadline = deadline;
   doc.status = "ASSIGNED";
-  doc.statusHistory = [...(doc.statusHistory || []), { status: "ASSIGNED", at: new Date(), by: "admin" }];
+  doc.isOverdue = computeIsOverdue(doc, now);
+  doc.statusHistory = [...(doc.statusHistory || []), { status: "ASSIGNED", at: now, by: "admin" }];
   await doc.save();
 
   const populated = await Request.findById(id).populate("categoryId");

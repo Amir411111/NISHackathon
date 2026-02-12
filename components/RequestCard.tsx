@@ -2,6 +2,7 @@ import { StatusBar } from "@/components/Status";
 import { CATEGORIES } from "@/constants/domain";
 import { ui } from "@/constants/ui";
 import type { Request, Worker } from "@/types/domain";
+import { formatDateTime } from "@/utils/time";
 import { StyleSheet, Text, View } from "react-native";
 
 export function RequestCard(props: {
@@ -26,6 +27,7 @@ export function RequestCard(props: {
 
       {props.request.addressLabel ? <Text style={styles.sub}>{props.request.addressLabel}</Text> : null}
       {coordLabel ? <Text style={styles.coord}>Коорд.: {coordLabel}</Text> : null}
+      {props.request.slaDeadline ? <Text style={styles.deadline}>Дедлайн: {formatDateTime(props.request.slaDeadline)}</Text> : null}
       <Text style={styles.desc} numberOfLines={2}>
         {props.request.description}
       </Text>
@@ -64,6 +66,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
   sub: { fontSize: 13, color: ui.colors.textMuted },
   coord: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "700" },
+  deadline: { fontSize: 12, color: ui.colors.warning, fontWeight: "900" },
   desc: { fontSize: 14, color: ui.colors.text },
   meta: { fontSize: 12, color: ui.colors.textMuted },
   badges: { flexDirection: "row", gap: 8, alignItems: "center" },
