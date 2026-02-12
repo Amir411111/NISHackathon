@@ -1,11 +1,12 @@
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 
 import { Button } from "@/components/Buttons";
 import { Field } from "@/components/Form";
 import { Screen } from "@/components/Screen";
-import { logout as apiLogout, getMe, login, register } from "@/services/authService";
+import { downloadDigitalIdFile, login, loginWithDigitalIdFile, logout as apiLogout, register, type RegisterResult } from "@/services/authService";
 import { useAppStore } from "@/store/useAppStore";
 import type { UserRole } from "@/types/domain";
 
@@ -15,16 +16,29 @@ export default function LoginScreen() {
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [role, setRole] = useState<UserRole>("CITIZEN");
+  const [loginMethod, setLoginMethod] = useState<"email" | "digital-file">("email");
   const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [issuedKey, setIssuedKey] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedNativeFile, setSelectedNativeFile] = useState<{ uri: string; name?: string; mimeType?: string } | null>(null);
+  const [issuedFile, setIssuedFile] = useState<RegisterResult["digitalIdFile"] | null>(null);
+  const [errorText, setErrorText] = useState("");
+  const [hintText, setHintText] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const isStrongPassword = useMemo(() => {
+    return password.length >= 6 && /[A-Za-z]/.test(password) && /\d/.test(password);
+  }, [password]);
+
   const canProceed = useMemo(() => {
-    if (mode === "login") return identifier.trim().length > 2 && password.length >= 6;
-    return email.trim().includes("@") && password.length >= 6;
-  }, [mode, identifier, email, password]);
+    if (mode === "login") {
+      if (loginMethod === "email") return identifier.trim().length > 0 && password.length > 0;
+      return (!!selectedFile || !!selectedNativeFile) && password.length > 0;
+    }
+    return email.trim().includes("@") && isStrongPassword && password === confirmPassword;
+  }, [mode, loginMethod, identifier, email, password, confirmPassword, selectedFile, selectedNativeFile, isStrongPassword]);
 
   const roleTitle = useMemo(() => {
     if (role === "CITIZEN") return "Житель";
@@ -35,20 +49,48 @@ export default function LoginScreen() {
   async function proceed() {
     if (!canProceed) return;
 
-    setIssuedKey(null);
+    setErrorText("");
+    setHintText("");
+    setIssuedFile(null);
     await apiLogout().catch(() => {});
 
     try {
       setBusy(true);
 
       if (mode === "login") {
-        const session = await login({ email: identifier.trim(), password });
+        let session;
+        if (loginMethod === "email") {
+          session = await login({ email: identifier.trim(), password });
+        } else {
+          if (Platform.OS === "web") {
+            if (!selectedFile) throw new Error("FILE_REQUIRED");
+            session = await loginWithDigitalIdFile({
+              file: selectedFile,
+              fileName: selectedFile.name,
+              password,
+            });
+          } else {
+            if (!selectedNativeFile) throw new Error("FILE_REQUIRED");
+            session = await loginWithDigitalIdFile({
+              fileUri: selectedNativeFile.uri,
+              fileName: selectedNativeFile.name,
+              fileMimeType: selectedNativeFile.mimeType,
+              password,
+            });
+          }
+        }
         loginAs(session.role);
       } else {
-        const session = await register({ email: email.trim(), password, role });
-        loginAs(session.role);
-        const me = await getMe();
-        setIssuedKey(me.digitalIdKey);
+        const registered = await register({ email: email.trim(), password, role });
+        loginAs(registered.session.role);
+        setIssuedFile(registered.digitalIdFile || null);
+
+        if (registered.digitalIdFile) {
+          const downloaded = await downloadDigitalIdFile(registered.digitalIdFile);
+          if (!downloaded) {
+            setHintText(`Файл ${registered.digitalIdFile.filename} выпущен. Нажмите ниже, чтобы сохранить.`);
+          }
+        }
       }
 
       await syncMe();
@@ -58,9 +100,14 @@ export default function LoginScreen() {
       if (sessionRole === "WORKER") router.replace("/(worker)");
       if (sessionRole === "ADMIN") router.replace("/(admin)");
     } catch (e: any) {
-      const status = e?.response?.status;
       const msg = e?.response?.data?.error;
-      Alert.alert("Ошибка авторизации", msg || `HTTP ${status ?? "?"}`);
+      if (e?.message === "FILE_REQUIRED") {
+        setErrorText("Выберите файл Digital ID.");
+      } else if (typeof msg === "string" && msg.trim().length > 0) {
+        setErrorText(msg);
+      } else {
+        setErrorText("Не удалось выполнить запрос. Попробуйте снова.");
+      }
     } finally {
       setBusy(false);
     }
@@ -69,7 +116,7 @@ export default function LoginScreen() {
   return (
     <Screen>
       <Text style={styles.h1}>Digital ID (eGov) · Auth</Text>
-      <Text style={styles.p}>Регистрация по роли + вход по Email или Digital ID key.</Text>
+      <Text style={styles.p}>Вход через Email + пароль или через Digital ID файл + тот же пароль.</Text>
 
       <View style={styles.modeRow}>
         <ModeChip title="Вход" active={mode === "login"} onPress={() => setMode("login")} />
@@ -87,16 +134,69 @@ export default function LoginScreen() {
       ) : null}
 
       {mode === "login" ? (
-        <Field label="Email или Digital ID key">
-          <TextInput
-            value={identifier}
-            onChangeText={setIdentifier}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder="user@mail.com или did_..."
-            style={styles.input}
-          />
-        </Field>
+        <>
+          <Field label="Способ входа">
+            <View style={styles.modeRow}>
+              <ModeChip title="Email" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
+              <ModeChip title="Digital ID файл" active={loginMethod === "digital-file"} onPress={() => setLoginMethod("digital-file")} />
+            </View>
+          </Field>
+
+          {loginMethod === "email" ? (
+            <Field label="Email">
+              <TextInput
+                value={identifier}
+                onChangeText={setIdentifier}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="user@mail.com"
+                style={styles.input}
+              />
+            </Field>
+          ) : (
+            <Field label="Файл Digital ID">
+              <Pressable
+                style={styles.pickFileBtn}
+                onPress={async () => {
+                  setErrorText("");
+                  if (Platform.OS === "web") {
+                    if (typeof document === "undefined") return;
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = ".eqid,.json,application/json";
+                    input.onchange = () => {
+                      const f = input.files?.[0] || null;
+                      setSelectedFile(f);
+                      setSelectedNativeFile(null);
+                    };
+                    input.click();
+                    return;
+                  }
+
+                  const result = await DocumentPicker.getDocumentAsync({
+                    type: ["application/json", "text/plain", "*/*"],
+                    copyToCacheDirectory: true,
+                    multiple: false,
+                  });
+
+                  if (result.canceled) return;
+                  const asset = result.assets?.[0];
+                  if (!asset?.uri) return;
+                  setSelectedNativeFile({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType });
+                  setSelectedFile(null);
+                }}
+              >
+                <Text style={styles.pickFileBtnText}>
+                  {selectedFile
+                    ? `Выбран: ${selectedFile.name}`
+                    : selectedNativeFile
+                      ? `Выбран: ${selectedNativeFile.name || "digital-id.eqid"}`
+                      : "Выбрать файл"}
+                </Text>
+              </Pressable>
+            </Field>
+          )}
+        </>
       ) : (
         <Field label="Email">
           <TextInput
@@ -111,16 +211,52 @@ export default function LoginScreen() {
       )}
 
       <Field label="Пароль">
-        <TextInput value={password} onChangeText={setPassword} secureTextEntry placeholder="минимум 6 символов" style={styles.input} />
+        <TextInput
+          value={password}
+          onChangeText={(v) => {
+            setPassword(v);
+            setErrorText("");
+          }}
+          secureTextEntry
+          placeholder={mode === "register" ? "Минимум 6 символов, буквы и цифры" : "Введите пароль"}
+          style={styles.input}
+        />
       </Field>
+
+      {mode === "register" ? (
+        <Field label="Повторите пароль">
+          <TextInput
+            value={confirmPassword}
+            onChangeText={(v) => {
+              setConfirmPassword(v);
+              setErrorText("");
+            }}
+            secureTextEntry
+            placeholder="Повторите пароль"
+            style={styles.input}
+          />
+        </Field>
+      ) : null}
+
+      {mode === "register" && !isStrongPassword && password.length > 0 ? (
+        <Text style={styles.validationText}>Пароль должен быть не менее 6 символов и содержать буквы и цифры.</Text>
+      ) : null}
+      {mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? (
+        <Text style={styles.validationText}>Пароли не совпадают.</Text>
+      ) : null}
 
       <View style={styles.summary}>
         <Text style={styles.summaryTitle}>Статус:</Text>
         <Text style={styles.summaryValue}>{mode === "register" ? `Регистрация: ${roleTitle}` : "Вход"}</Text>
-        {issuedKey ? (
-          <Pressable onPress={() => Alert.alert("Digital ID key", issuedKey)}>
-            <Text style={styles.key}>Digital ID key: {issuedKey}</Text>
-            <Text style={styles.keyHint}>Нажмите, чтобы показать/скопировать</Text>
+        {issuedFile ? (
+          <Pressable
+            onPress={async () => {
+              const ok = await downloadDigitalIdFile(issuedFile);
+              if (!ok) Alert.alert("Готово", `Файл создан: ${issuedFile.filename}`);
+            }}
+          >
+            <Text style={styles.key}>Digital ID файл выпущен: {issuedFile.filename}</Text>
+            <Text style={styles.keyHint}>Нажмите, чтобы скачать файл</Text>
           </Pressable>
         ) : null}
       </View>
@@ -128,6 +264,9 @@ export default function LoginScreen() {
       <Button onPress={proceed} disabled={!canProceed} loading={busy}>
         {mode === "login" ? "Войти" : "Зарегистрироваться"}
       </Button>
+
+      {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
+      {hintText ? <Text style={styles.hintText}>{hintText}</Text> : null}
     </Screen>
   );
 }
@@ -199,4 +338,16 @@ const styles = StyleSheet.create({
   summaryValue: { marginTop: 4, fontSize: 16, fontWeight: "900", color: "#111" },
   key: { marginTop: 8, fontSize: 12, fontWeight: "900", color: "#111" },
   keyHint: { marginTop: 2, fontSize: 11, fontWeight: "700", color: "#666" },
+  pickFileBtn: {
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+  },
+  pickFileBtnText: { fontSize: 14, fontWeight: "800", color: "#111" },
+  validationText: { marginTop: -6, fontSize: 12, fontWeight: "700", color: "#a16207" },
+  errorText: { marginTop: 8, fontSize: 13, fontWeight: "800", color: "#b91c1c" },
+  hintText: { marginTop: 8, fontSize: 13, fontWeight: "700", color: "#065f46" },
 });
