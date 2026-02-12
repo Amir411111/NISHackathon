@@ -147,185 +147,190 @@ export default function LoginScreen() {
 
       <Text style={styles.h1}>{mode === "login" ? "Log In" : "Sign Up"}</Text>
 
-      {mode === "login" ? (
-        <View
-          style={styles.segmentWrap}
-          onLayout={(event) => {
-            setSegmentWidth(event.nativeEvent.layout.width);
-          }}
-        >
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.segmentThumb,
-              {
-                width: segmentThumbWidth,
-                transform: [
-                  {
-                    translateX: methodSwitchAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, segmentThumbShift],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
-          <ModeChip title="Digital ID" active={loginMethod === "digital-file"} onPress={() => setLoginMethod("digital-file")} />
-          <ModeChip title="Email" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
-        </View>
-      ) : null}
+      <View style={styles.formCard}>
+        {mode === "login" ? (
+          <View
+            style={styles.segmentWrap}
+            onLayout={(event) => {
+              setSegmentWidth(event.nativeEvent.layout.width);
+            }}
+          >
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.segmentThumb,
+                {
+                  width: segmentThumbWidth,
+                  transform: [
+                    {
+                      translateX: methodSwitchAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, segmentThumbShift],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+            <ModeChip title="Digital ID" active={loginMethod === "digital-file"} onPress={() => setLoginMethod("digital-file")} />
+            <ModeChip title="Email" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
+          </View>
+        ) : null}
 
-      {mode === "login" ? (
-        <View style={styles.methodWrap}>
-          {loginMethod === "email" ? (
+        {mode === "login" ? (
+          <View style={styles.methodWrap}>
+            {loginMethod === "email" ? (
+              <Field label="Email">
+                <TextInput
+                  value={identifier}
+                  onChangeText={setIdentifier}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder="Email"
+                  style={styles.input}
+                />
+              </Field>
+            ) : (
+              <Field label="Файл Digital ID">
+                <Pressable
+                  style={[styles.pickFileBtn, !hasSelectedDigitalFile && styles.pickFileBtnPlaceholderBorder]}
+                  onPress={async () => {
+                    setErrorText("");
+                    if (Platform.OS === "web") {
+                      if (typeof document === "undefined") return;
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".eqid,.json,application/json";
+                      input.onchange = () => {
+                        const f = input.files?.[0] || null;
+                        setSelectedFile(f);
+                        setSelectedNativeFile(null);
+                      };
+                      input.click();
+                      return;
+                    }
+
+                    const result = await DocumentPicker.getDocumentAsync({
+                      type: ["application/json", "text/plain", "*/*"],
+                      copyToCacheDirectory: true,
+                      multiple: false,
+                    });
+
+                    if (result.canceled) return;
+                    const asset = result.assets?.[0];
+                    if (!asset?.uri) return;
+                    setSelectedNativeFile({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType });
+                    setSelectedFile(null);
+                  }}
+                >
+                  <Text style={[styles.pickFileBtnText, !hasSelectedDigitalFile && styles.pickFileBtnPlaceholderText]}>
+                    {selectedFile
+                      ? selectedFile.name
+                      : selectedNativeFile
+                        ? selectedNativeFile.name || "digital-id.eqid"
+                        : "upload file"}
+                  </Text>
+                </Pressable>
+              </Field>
+            )}
+          </View>
+        ) : (
+          <>
+            <Field label="ФИО">
+              <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Name" style={styles.input} />
+            </Field>
             <Field label="Email">
               <TextInput
-                value={identifier}
-                onChangeText={setIdentifier}
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
                 autoCorrect={false}
                 placeholder="Email"
                 style={styles.input}
               />
             </Field>
-          ) : (
-            <Field label="Файл Digital ID">
-              <Pressable
-                style={[styles.pickFileBtn, !hasSelectedDigitalFile && styles.pickFileBtnPlaceholderBorder]}
-                onPress={async () => {
+            {loginMethod === "digital-file" ? <Text style={styles.hintText}>Digital ID файл будет выдан после регистрации.</Text> : null}
+          </>
+        )}
+
+        <Field label="Password">
+          <View style={styles.inputRow}>
+            <TextInput
+              value={password}
+              onChangeText={(v) => {
+                setPassword(v);
+                setErrorText("");
+              }}
+              secureTextEntry={!passwordVisible}
+              placeholder="Password"
+              style={[styles.input, styles.inputGrow]}
+            />
+            <Pressable onPress={() => setPasswordVisible((v) => !v)} style={styles.showBtn}>
+              <Text style={styles.showBtnText}>Show</Text>
+            </Pressable>
+          </View>
+        </Field>
+
+        {mode === "register" ? (
+          <Field label="Confirm password">
+            <View style={styles.inputRow}>
+              <TextInput
+                value={confirmPassword}
+                onChangeText={(v) => {
+                  setConfirmPassword(v);
                   setErrorText("");
-                  if (Platform.OS === "web") {
-                    if (typeof document === "undefined") return;
-                    const input = document.createElement("input");
-                    input.type = "file";
-                    input.accept = ".eqid,.json,application/json";
-                    input.onchange = () => {
-                      const f = input.files?.[0] || null;
-                      setSelectedFile(f);
-                      setSelectedNativeFile(null);
-                    };
-                    input.click();
-                    return;
-                  }
-
-                  const result = await DocumentPicker.getDocumentAsync({
-                    type: ["application/json", "text/plain", "*/*"],
-                    copyToCacheDirectory: true,
-                    multiple: false,
-                  });
-
-                  if (result.canceled) return;
-                  const asset = result.assets?.[0];
-                  if (!asset?.uri) return;
-                  setSelectedNativeFile({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType });
-                  setSelectedFile(null);
                 }}
-              >
-                <Text style={[styles.pickFileBtnText, !hasSelectedDigitalFile && styles.pickFileBtnPlaceholderText]}>
-                  {selectedFile
-                    ? selectedFile.name
-                    : selectedNativeFile
-                      ? selectedNativeFile.name || "digital-id.eqid"
-                      : "upload file"}
-                </Text>
+                secureTextEntry={!confirmVisible}
+                placeholder="Confirm password"
+                style={[styles.input, styles.inputGrow]}
+              />
+              <Pressable onPress={() => setConfirmVisible((v) => !v)} style={styles.showBtn}>
+                <Text style={styles.showBtnText}>Show</Text>
               </Pressable>
-            </Field>
-          )}
-        </View>
-      ) : (
-        <>
-          <View style={styles.roleSection}>
-            <Text style={styles.roleSectionLabel}>Выберите роль (обязательно)</Text>
+            </View>
+          </Field>
+        ) : null}
+
+        {mode === "register" ? (
+          <Field label="Роль">
             <View style={styles.roleRow}>
               <RoleChip title="Житель" active={role === "CITIZEN"} onPress={() => setRole("CITIZEN")} />
               <RoleChip title="Диспетчер" active={role === "ADMIN"} onPress={() => setRole("ADMIN")} />
               <RoleChip title="Специалист" active={role === "WORKER"} onPress={() => setRole("WORKER")} />
             </View>
-          </View>
-
-          <Field label="ФИО">
-            <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Name" style={styles.input} />
           </Field>
-          <Field label="Email">
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholder="Email"
-              style={styles.input}
-            />
-          </Field>
-          {loginMethod === "digital-file" ? <Text style={styles.hintText}>Digital ID файл будет выдан после регистрации.</Text> : null}
-        </>
-      )}
+        ) : null}
 
-      <Field label="Password">
-        <View style={styles.inputRow}>
-          <TextInput
-            value={password}
-            onChangeText={(v) => {
-              setPassword(v);
-              setErrorText("");
-            }}
-            secureTextEntry={!passwordVisible}
-            placeholder="Password"
-            style={[styles.input, styles.inputGrow]}
-          />
-          <Pressable onPress={() => setPasswordVisible((v) => !v)} style={styles.showBtn}>
-            <Text style={styles.showBtnText}>Show</Text>
-          </Pressable>
-        </View>
-      </Field>
+        {mode === "register" && !isStrongPassword && password.length > 0 ? (
+          <Text style={styles.validationText}>Пароль должен быть не менее 6 символов и содержать буквы и цифры.</Text>
+        ) : null}
+        {mode === "register" && fullName.trim().length > 0 && fullName.trim().length < 3 ? (
+          <Text style={styles.validationText}>Введите корректное ФИО (минимум 3 символа).</Text>
+        ) : null}
+        {mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? (
+          <Text style={styles.validationText}>Пароли не совпадают.</Text>
+        ) : null}
 
-      {mode === "register" ? (
-        <Field label="Confirm password">
-          <View style={styles.inputRow}>
-            <TextInput
-              value={confirmPassword}
-              onChangeText={(v) => {
-                setConfirmPassword(v);
-                setErrorText("");
+        {issuedFile ? (
+          <View style={styles.summary}>
+            <Pressable
+              onPress={async () => {
+                const ok = await downloadDigitalIdFile(issuedFile);
+                if (!ok) Alert.alert("Готово", `Файл создан: ${issuedFile.filename}`);
               }}
-              secureTextEntry={!confirmVisible}
-              placeholder="Confirm password"
-              style={[styles.input, styles.inputGrow]}
-            />
-            <Pressable onPress={() => setConfirmVisible((v) => !v)} style={styles.showBtn}>
-              <Text style={styles.showBtnText}>Show</Text>
+            >
+              <Text style={styles.key}>Digital ID файл: {issuedFile.filename}</Text>
+              <Text style={styles.keyHint}>Нажмите, чтобы скачать</Text>
             </Pressable>
           </View>
-        </Field>
-      ) : null}
+        ) : null}
+      </View>
 
-      {mode === "register" && !isStrongPassword && password.length > 0 ? (
-        <Text style={styles.validationText}>Пароль должен быть не менее 6 символов и содержать буквы и цифры.</Text>
-      ) : null}
-      {mode === "register" && fullName.trim().length > 0 && fullName.trim().length < 3 ? (
-        <Text style={styles.validationText}>Введите корректное ФИО (минимум 3 символа).</Text>
-      ) : null}
-      {mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? (
-        <Text style={styles.validationText}>Пароли не совпадают.</Text>
-      ) : null}
-
-      {issuedFile ? (
-        <View style={styles.summary}>
-          <Pressable
-            onPress={async () => {
-              const ok = await downloadDigitalIdFile(issuedFile);
-              if (!ok) Alert.alert("Готово", `Файл создан: ${issuedFile.filename}`);
-            }}
-          >
-            <Text style={styles.key}>Digital ID файл: {issuedFile.filename}</Text>
-            <Text style={styles.keyHint}>Нажмите, чтобы скачать</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
-      <Button onPress={proceed} disabled={!canProceed} loading={busy}>
-        {mode === "login" ? "Log In" : "Sign Up"}
-      </Button>
+      <View style={styles.submitWrap}>
+        <Button onPress={proceed} disabled={!canProceed} loading={busy}>
+          {mode === "login" ? "Log In" : "Sign Up"}
+        </Button>
+      </View>
 
       {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
       {hintText ? <Text style={styles.hintText}>{hintText}</Text> : null}
@@ -357,6 +362,13 @@ const styles = StyleSheet.create({
   h1: { marginTop: 2, fontSize: 22, fontWeight: "900", color: ui.colors.text, textAlign: "center" },
   p: { fontSize: 14, color: ui.colors.textMuted, lineHeight: 20, textAlign: "center" },
 
+  formCard: {
+    gap: 12,
+  },
+  submitWrap: {
+    marginTop: 6,
+  },
+
   segmentWrap: {
     flexDirection: "row",
     position: "relative",
@@ -387,20 +399,6 @@ const styles = StyleSheet.create({
 
   methodWrap: { gap: 12 },
 
-  roleSection: {
-    gap: 8,
-    padding: 10,
-    marginBottom: 2,
-    borderWidth: 1,
-    borderColor: ui.colors.border,
-    borderRadius: 12,
-    backgroundColor: ui.colors.surface,
-  },
-  roleSectionLabel: {
-    fontSize: 14,
-    fontWeight: "900",
-    color: ui.colors.primary,
-  },
   roleRow: { flexDirection: "row", gap: 8 },
   roleChip: {
     flex: 1,
@@ -408,7 +406,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: ui.colors.border,
     backgroundColor: ui.colors.surfaceMuted,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: "center",
   },
   roleChipActive: {
@@ -426,7 +424,9 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: ui.colors.surfaceMuted,
+    backgroundColor: ui.colors.surface,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: ui.colors.surfaceMuted,
+    backgroundColor: ui.colors.surface,
     borderWidth: 1,
     borderColor: ui.colors.border,
   },

@@ -22,20 +22,24 @@ export default function AdminLayout() {
         name="index"
         options={{
           title: "Диспетчер",
+          headerTitleStyle: { color: ui.colors.text, fontWeight: "800", fontSize: 20 },
           headerRight: () => (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <HeaderButton title="Сводка" onPress={() => router.push("/(admin)/dashboard")} />
-              <HeaderButton title="Профиль" onPress={() => router.push("/(admin)/user")} />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginRight: 8 }}>
+              <HeaderButton compact icon="stats-chart" onPress={() => router.push("/(admin)/dashboard")} />
+              <HeaderButton compact icon="person" onPress={() => router.push("/(admin)/user")} />
             </View>
           ),
           headerLeft: () => (
-            <HeaderButton
-              title="Выйти"
-              onPress={() => {
-                logout();
-                router.replace("/(auth)/login");
-              }}
-            />
+            <View style={{ marginLeft: 8 }}>
+              <HeaderButton
+                compact
+                icon="log-out-outline"
+                onPress={() => {
+                  logout();
+                  router.replace("/(auth)/login");
+                }}
+              />
+            </View>
           ),
         }}
       />

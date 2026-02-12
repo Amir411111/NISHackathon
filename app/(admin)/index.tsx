@@ -14,7 +14,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { requestDisplayName } from "@/utils/requestPresentation";
 
 export default function AdminDispatcherScreen() {
-  type AdminTab = "ACTIVE" | "PENDING_CONFIRM" | "CLOSED";
+  type AdminTab = "ACTIVE" | "OVERDUE" | "COMPLETED";
 
   const now = useNow(1000);
   const requests = useAppStore((s) => s.requests);
@@ -39,19 +39,19 @@ export default function AdminDispatcherScreen() {
 
   const selectedRequest = useMemo(() => (assignFor ? requests.find((r) => r.id === assignFor) : null), [assignFor, requests]);
   const activeRequests = useMemo(() => requests.filter((r) => r.status !== "DONE" && r.status !== "REJECTED"), [requests]);
-  const pendingConfirmationRequests = useMemo(() => requests.filter((r) => r.status === "DONE" && !r.citizenConfirmedAt), [requests]);
-  const closedRequests = useMemo(() => requests.filter((r) => (r.status === "DONE" && Boolean(r.citizenConfirmedAt)) || r.status === "REJECTED"), [requests]);
+  const overdueRequests = useMemo(() => activeRequests.filter((r) => isOverdue(r, now)), [activeRequests, isOverdue, now]);
+  const completedRequests = useMemo(() => requests.filter((r) => r.status === "DONE" || r.status === "REJECTED"), [requests]);
 
   const tabItems = useMemo(
     () => [
       { key: "ACTIVE" as const, title: "Активные", count: activeRequests.length },
-      { key: "PENDING_CONFIRM" as const, title: "Ждут подтверждения", count: pendingConfirmationRequests.length },
-      { key: "CLOSED" as const, title: "Закрытые", count: closedRequests.length },
+      { key: "OVERDUE" as const, title: "Просроченные", count: overdueRequests.length },
+      { key: "COMPLETED" as const, title: "Завершенные", count: completedRequests.length },
     ],
-    [activeRequests.length, pendingConfirmationRequests.length, closedRequests.length]
+    [activeRequests.length, overdueRequests.length, completedRequests.length]
   );
 
-  const visibleRequests = selectedTab === "ACTIVE" ? activeRequests : selectedTab === "PENDING_CONFIRM" ? pendingConfirmationRequests : closedRequests;
+  const visibleRequests = selectedTab === "ACTIVE" ? activeRequests : selectedTab === "OVERDUE" ? overdueRequests : completedRequests;
 
   useEffect(() => {
     let alive = true;
@@ -88,34 +88,39 @@ export default function AdminDispatcherScreen() {
       <ScrollView contentContainerStyle={styles.list}>
         <AIAssistant role="ADMIN" admin={{ requests, workers, now, isOverdue }} />
 
-        <View style={styles.tabsRow}>
-          {tabItems.map((tab) => (
-            <Pressable key={tab.key} onPress={() => setSelectedTab(tab.key)} style={[styles.tabChip, selectedTab === tab.key && styles.tabChipActive]}>
-              <Text style={[styles.tabChipText, selectedTab === tab.key && styles.tabChipTextActive]}>{tab.title}</Text>
-              <Text style={[styles.tabChipCount, selectedTab === tab.key && styles.tabChipCountActive]}>{tab.count}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.overviewCard}>
+          <Text style={styles.overviewTitle}>Панель диспетчера</Text>
+          <Text style={styles.overviewSub}>Выберите фильтр: активные, просроченные или завершенные заявки.</Text>
+          <View style={styles.overviewStatsRow}>
+            {tabItems.map((tab) => (
+              <Pressable key={tab.key} onPress={() => setSelectedTab(tab.key)} style={styles.statPressable}>
+                <StatBadge label={tab.title} value={tab.count} tone={selectedTab === tab.key ? "primary" : "default"} />
+              </Pressable>
+            ))}
+          </View>
         </View>
-
-        <SectionTitle text={selectedTab === "ACTIVE" ? "Активные заявки" : selectedTab === "PENDING_CONFIRM" ? "Выполнены, ждут подтверждения" : "Закрытые заявки"} count={visibleRequests.length} />
         {visibleRequests.length === 0 ? <Text style={styles.empty}>Пока нет заявок в этой вкладке</Text> : null}
         {visibleRequests.map((item) => {
           const worker = getWorkerById(item.assignedWorkerId);
           return (
-            <View key={item.id} style={{ gap: 10 }}>
+            <View key={item.id} style={styles.requestBlock}>
               <Link href={`/(admin)/requests/${item.id}`} asChild>
                 <Pressable>
                   <RequestCard request={item} worker={worker} overdue={isOverdue(item, now)} />
                 </Pressable>
               </Link>
               {selectedTab === "ACTIVE" ? (
-                <View style={styles.row}>
-                  <Button onPress={() => setRejectFor(item.id)} variant="secondary" disabled={Boolean(assigningWorkerId) || rejecting}>
-                    Отклонить заявку
-                  </Button>
-                  <Button onPress={() => setAssignFor(item.id)} variant="secondary" disabled={Boolean(assigningWorkerId) || rejecting}>
+                <View style={styles.actionsRow}>
+                  <View style={styles.actionBtnWrap}>
+                    <Button onPress={() => setAssignFor(item.id)} disabled={Boolean(assigningWorkerId) || rejecting}>
                     Назначить исполнителя
-                  </Button>
+                    </Button>
+                  </View>
+                  <View style={styles.actionBtnWrap}>
+                    <Button onPress={() => setRejectFor(item.id)} variant="danger" disabled={Boolean(assigningWorkerId) || rejecting}>
+                      Отклонить заявку
+                    </Button>
+                  </View>
                 </View>
               ) : null}
             </View>
@@ -269,53 +274,69 @@ export default function AdminDispatcherScreen() {
   );
 }
 
-function SectionTitle(props: { text: string; count: number }) {
+function StatBadge(props: { label: string; value: number; tone: "default" | "primary" | "warning" }) {
   return (
-    <View style={styles.sectionHead}>
-      <Text style={styles.sectionTitle}>{props.text}</Text>
-      <Text style={styles.sectionCount}>{props.count}</Text>
+    <View
+      style={[
+        styles.statBadge,
+        props.tone === "primary" && styles.statBadgePrimary,
+        props.tone === "warning" && styles.statBadgeWarning,
+      ]}
+    >
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[styles.statBadgeLabel, props.tone === "primary" && styles.statBadgeLabelPrimary]}
+      >
+        {props.label}
+      </Text>
+      <Text style={[styles.statBadgeValue, props.tone === "primary" && styles.statBadgeValuePrimary]}>{props.value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   list: { padding: 16, paddingBottom: 24, gap: 12 },
-  row: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
-  tabsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  tabChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 999,
+  overviewCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surface,
+    padding: 12,
+    gap: 10,
+  },
+  overviewTitle: { fontSize: 18, fontWeight: "900", color: ui.colors.text },
+  overviewSub: { fontSize: 13, lineHeight: 18, fontWeight: "700", color: ui.colors.textMuted },
+  overviewStatsRow: { flexDirection: "row", gap: 8 },
+  statPressable: { flex: 1 },
+  statBadge: {
+    minHeight: 80,
+    justifyContent: "space-between",
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: ui.colors.border,
     backgroundColor: ui.colors.surfaceMuted,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 10,
+    gap: 2,
   },
-  tabChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
-  tabChipText: { color: ui.colors.textMuted, fontSize: 12, fontWeight: "800" },
-  tabChipTextActive: { color: ui.colors.primary },
-  tabChipCount: { color: ui.colors.textMuted, fontSize: 12, fontWeight: "900" },
-  tabChipCountActive: { color: ui.colors.primary },
-  sectionHead: {
-    marginTop: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  sectionTitle: { fontSize: 15, fontWeight: "900", color: ui.colors.text },
-  sectionCount: {
-    minWidth: 24,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
+  statBadgePrimary: {
+    borderColor: ui.colors.primary,
     backgroundColor: ui.colors.primarySoft,
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "800",
-    color: ui.colors.primary,
   },
+  statBadgeWarning: {
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surface,
+  },
+  statBadgeLabel: { fontSize: 10, fontWeight: "800", color: ui.colors.textMuted },
+  statBadgeLabelPrimary: { color: ui.colors.primary },
+  statBadgeValue: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
+  statBadgeValuePrimary: { color: ui.colors.primary },
+  row: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
+  requestBlock: { gap: 10 },
+  actionsRow: { flexDirection: "row", gap: 10 },
+  actionBtnWrap: { flex: 1 },
   empty: { color: ui.colors.textMuted, fontWeight: "700", marginBottom: 4 },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", alignItems: "center", justifyContent: "center", padding: 16 },
   modalCard: { width: "100%", borderRadius: 16, backgroundColor: ui.colors.surface, padding: 16, gap: 12 },
