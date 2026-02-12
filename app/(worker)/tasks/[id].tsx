@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import type { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
 import { PhotoPicker } from "@/components/PhotoPicker";
@@ -8,6 +9,7 @@ import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { StatusTimeline } from "@/components/Status";
 import { useNow } from "@/hooks/useNow";
+import { startTask as apiStartTask, completeTask } from "@/services/requestService";
 import { getWorkSeconds, useAppStore } from "@/store/useAppStore";
 import { formatDuration } from "@/utils/time";
 
@@ -22,6 +24,9 @@ export default function WorkerTaskScreen() {
   const finishWork = useAppStore((s) => s.finishWork);
   const setBeforePhoto = useAppStore((s) => s.setBeforePhoto);
   const setAfterPhoto = useAppStore((s) => s.setAfterPhoto);
+  const upsertRequest = useAppStore((s) => s.upsertRequest);
+  const [starting, setStarting] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   if (!request) {
     return (
@@ -34,9 +39,54 @@ export default function WorkerTaskScreen() {
     );
   }
 
+  const requestId = request.id;
+  const afterPhotoUri = request.afterPhotoUri;
+
   const elapsed = getWorkSeconds(request, now);
   const canStart = request.status === "ASSIGNED";
   const canFinish = request.status === "IN_PROGRESS";
+
+  async function onStart() {
+    if (starting || completing) return;
+    try {
+      setStarting(true);
+      const updated = await apiStartTask(requestId);
+      upsertRequest(updated);
+      startWork(requestId);
+      return;
+    } catch {
+      // fallback
+    } finally {
+      setStarting(false);
+    }
+    startWork(requestId);
+  }
+
+  async function onComplete() {
+    if (completing || starting) return;
+    if (!afterPhotoUri) return;
+    if (afterPhotoUri.startsWith("mock://")) {
+      Alert.alert("Нужно реальное фото", "Для backend-загрузки приложите фото из камеры/галереи.");
+      return;
+    }
+
+    try {
+      setCompleting(true);
+      const updated = await completeTask(requestId, afterPhotoUri);
+      upsertRequest(updated);
+      finishWork(requestId);
+      return;
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.error ||
+        e?.message ||
+        "Не удалось завершить задачу. Проверьте, что backend запущен и фото прикрепилось.";
+      Alert.alert("Ошибка", String(msg));
+      return;
+    } finally {
+      setCompleting(false);
+    }
+  }
 
   return (
     <Screen>
@@ -58,7 +108,7 @@ export default function WorkerTaskScreen() {
           </Text>
         </View>
         {canStart ? (
-          <Button onPress={() => startWork(request.id)}>
+          <Button onPress={onStart} loading={starting} disabled={starting || completing}>
             Начать работу
           </Button>
         ) : null}
@@ -66,7 +116,7 @@ export default function WorkerTaskScreen() {
 
       {canFinish ? (
         <Section title="Завершение">
-          <Button onPress={() => finishWork(request.id)} disabled={!request.afterPhotoUri}>
+          <Button onPress={onComplete} loading={completing} disabled={!request.afterPhotoUri || completing || starting}>
             Завершить
           </Button>
           {!request.afterPhotoUri ? <Text style={styles.hint}>Для завершения приложите фото «После» (mock).</Text> : null}

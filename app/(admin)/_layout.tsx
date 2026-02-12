@@ -12,7 +12,7 @@ export default function AdminLayout() {
         name="index"
         options={{
           title: "Диспетчер",
-          headerRight: () => <HeaderButton title="Дашборд" onPress={() => router.push("/(admin)/dashboard")} />,
+          headerRight: () => <HeaderButton title="Сводка" onPress={() => router.push("/(admin)/dashboard")} />,
           headerLeft: () => (
             <HeaderButton
               title="Выйти"
@@ -24,7 +24,7 @@ export default function AdminLayout() {
           ),
         }}
       />
-      <Stack.Screen name="dashboard" options={{ title: "Аналитика" }} />
+      <Stack.Screen name="dashboard" options={{ title: "Сводка" }} />
     </Stack>
   );
 }

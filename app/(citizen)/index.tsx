@@ -1,20 +1,40 @@
 import { Link } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { ACTIVE_CITIZEN_BADGE_THRESHOLD } from "@/constants/sla";
 import { useNow } from "@/hooks/useNow";
+import { getMyRequests } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function CitizenRequestsScreen() {
   const now = useNow(1000);
   const requests = useAppStore((s) => s.requests);
+  const replaceRequests = useAppStore((s) => s.replaceRequests);
   const getWorkerById = useAppStore((s) => s.getWorkerById);
   const isOverdue = useAppStore((s) => s.isRequestOverdue);
   const points = useAppStore((s) => s.citizenPoints);
 
+  useEffect(() => {
+    let alive = true;
+    getMyRequests()
+      .then((items) => {
+        if (!alive) return;
+        replaceRequests(items);
+      })
+      .catch(() => {
+        // stay compatible with mock-only mode
+      });
+    return () => {
+      alive = false;
+    };
+  }, [replaceRequests]);
+
   const hasBadge = points >= ACTIVE_CITIZEN_BADGE_THRESHOLD;
+  const incompleteRequests = requests.filter((r) => r.status !== "DONE");
+  const completedRequests = requests.filter((r) => r.status === "DONE");
 
   return (
     <Screen scroll={false}>
@@ -33,24 +53,45 @@ export default function CitizenRequestsScreen() {
         </Link>
       </View>
 
-      <FlatList
-        data={requests}
-        keyExtractor={(i) => i.id}
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        renderItem={({ item }) => {
+      <ScrollView contentContainerStyle={styles.list}>
+        <SectionTitle text="Не выполненные" count={incompleteRequests.length} />
+        {incompleteRequests.length === 0 ? <Text style={styles.empty}>Нет активных заявок</Text> : null}
+        {incompleteRequests.map((item) => {
           const worker = getWorkerById(item.assignedWorkerId);
           const overdue = isOverdue(item, now);
           return (
-            <Link href={`/(citizen)/requests/${item.id}`} asChild>
+            <Link key={item.id} href={`/(citizen)/requests/${item.id}`} asChild>
               <Pressable>
                 <RequestCard request={item} worker={worker} overdue={overdue} />
               </Pressable>
             </Link>
           );
-        }}
-      />
+        })}
+
+        <SectionTitle text="Выполненные" count={completedRequests.length} />
+        {completedRequests.length === 0 ? <Text style={styles.empty}>Выполненных заявок пока нет</Text> : null}
+        {completedRequests.map((item) => {
+          const worker = getWorkerById(item.assignedWorkerId);
+          const overdue = isOverdue(item, now);
+          return (
+            <Link key={item.id} href={`/(citizen)/requests/${item.id}`} asChild>
+              <Pressable>
+                <RequestCard request={item} worker={worker} overdue={overdue} />
+              </Pressable>
+            </Link>
+          );
+        })}
+      </ScrollView>
     </Screen>
+  );
+}
+
+function SectionTitle(props: { text: string; count: number }) {
+  return (
+    <View style={styles.sectionHead}>
+      <Text style={styles.sectionTitle}>{props.text}</Text>
+      <Text style={styles.sectionCount}>{props.count}</Text>
+    </View>
   );
 }
 
@@ -62,5 +103,24 @@ const styles = StyleSheet.create({
   badgeActive: { color: "#111" },
   cta: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: "#111", alignItems: "center" },
   ctaText: { color: "#fff", fontWeight: "900" },
-  list: { paddingHorizontal: 16, paddingBottom: 16 },
+  list: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
+  sectionHead: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  sectionTitle: { fontSize: 15, fontWeight: "900", color: "#111" },
+  sectionCount: {
+    minWidth: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: "#f2f2f2",
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#444",
+  },
+  empty: { color: "#777", fontWeight: "700", marginBottom: 4 },
 });

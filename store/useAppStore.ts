@@ -1,13 +1,15 @@
 import { create } from "zustand";
 
 import { ACTIVE_CITIZEN_BADGE_THRESHOLD, GAMIFICATION_POINTS_PER_CONFIRMED_REQUEST, SLA_IN_PROGRESS_MINUTES } from "@/constants/sla";
-import { MOCK_REQUESTS, MOCK_WORKERS } from "@/mock/seed";
+import { MOCK_REQUESTS } from "@/mock/seed";
+import { logout as apiLogout, getMe, getStoredSession } from "@/services/authService";
 import type { AppUser, Category, Request, RequestLocation, RequestPriority, RequestStatus, UserRole, Worker } from "@/types/domain";
 import { createId } from "@/utils/id";
 
 type CreateRequestInput = {
   category: Category;
   description: string;
+  priority?: RequestPriority;
   photoUri?: string;
   location?: RequestLocation;
   addressLabel?: string;
@@ -20,11 +22,20 @@ type AssignInput = {
 
 type AppState = {
   user: AppUser | null;
+  authBootstrapped: boolean;
 
   workers: Worker[];
   requests: Request[];
 
   citizenPoints: number;
+
+  replaceRequests: (items: Request[]) => void;
+  upsertRequest: (item: Request) => void;
+
+  replaceWorkers: (items: Worker[]) => void;
+
+  bootstrapAuth: () => Promise<void>;
+  syncMe: () => Promise<void>;
 
   loginAs: (role: UserRole, opts?: { workerId?: string }) => void;
   logout: () => void;
@@ -65,21 +76,72 @@ function calcWorkSeconds(r: Request, now = Date.now()): number {
 
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
+  authBootstrapped: false,
 
-  workers: MOCK_WORKERS,
+  workers: [],
   requests: MOCK_REQUESTS,
 
   citizenPoints: 0,
 
+  replaceRequests: (items) => set({ requests: items }),
+  replaceWorkers: (items) => set({ workers: items }),
+  upsertRequest: (item) =>
+    set((s) => {
+      const idx = s.requests.findIndex((r) => r.id === item.id);
+      if (idx === -1) return { requests: [item, ...s.requests] };
+      const next = [...s.requests];
+      next[idx] = item;
+      return { requests: next };
+    }),
+
+  bootstrapAuth: async () => {
+    try {
+      const session = await getStoredSession();
+      if (!session) {
+        set({ authBootstrapped: true });
+        return;
+      }
+
+      set({ user: { role: session.role, workerId: session.workerId }, authBootstrapped: true });
+
+      await get().syncMe();
+    } catch {
+      set({ authBootstrapped: true });
+    }
+  },
+
+  syncMe: async () => {
+    try {
+      const me = await getMe();
+      const current = get().user;
+      if (!current) return;
+
+      set({
+        user: {
+          ...current,
+          role: me.role,
+          id: me.id,
+          email: me.email,
+          digitalIdKey: me.digitalIdKey,
+        },
+        citizenPoints: typeof me.points === "number" ? me.points : get().citizenPoints,
+      });
+    } catch {
+      // ignore
+    }
+  },
+
   loginAs: (role, opts) => set({ user: { role, workerId: opts?.workerId } }),
-  logout: () => set({ user: null }),
+  logout: () => {
+    apiLogout().catch(() => {});
+    set({ user: null, citizenPoints: 0 });
+  },
 
   createRequest: (input) => {
     const id = createId("req");
     const now = Date.now();
 
-    const priorities: RequestPriority[] = ["LOW", "MEDIUM", "HIGH"];
-    const priority = priorities[Math.floor(Math.random() * priorities.length)] ?? "LOW";
+    const priority: RequestPriority = input.priority ?? "MEDIUM";
 
     const req: Request = {
       id,

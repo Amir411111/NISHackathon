@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
@@ -8,6 +9,7 @@ import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { StatusTimeline } from "@/components/Status";
 import { useNow } from "@/hooks/useNow";
+import { citizenConfirm, citizenReject } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function CitizenRequestDetailsScreen() {
@@ -20,6 +22,10 @@ export default function CitizenRequestDetailsScreen() {
 
   const confirmDone = useAppStore((s) => s.citizenConfirmDone);
   const sendRework = useAppStore((s) => s.citizenSendRework);
+  const upsertRequest = useAppStore((s) => s.upsertRequest);
+  const syncMe = useAppStore((s) => s.syncMe);
+  const [confirming, setConfirming] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
 
   if (!request) {
     return (
@@ -32,8 +38,43 @@ export default function CitizenRequestDetailsScreen() {
     );
   }
 
+  const requestId = request.id;
+
   const worker = getWorkerById(request.assignedWorkerId);
   const canCitizenDecide = request.status === "DONE" && !request.citizenConfirmedAt;
+
+  async function onConfirm() {
+    if (confirming || rejecting) return;
+    try {
+      setConfirming(true);
+      const updated = await citizenConfirm(requestId);
+      upsertRequest(updated);
+      confirmDone(requestId);
+      await syncMe();
+      return;
+    } catch {
+      // fallback to mock-only
+    } finally {
+      setConfirming(false);
+    }
+    confirmDone(requestId);
+  }
+
+  async function onReject() {
+    if (rejecting || confirming) return;
+    try {
+      setRejecting(true);
+      const updated = await citizenReject(requestId);
+      upsertRequest(updated);
+      sendRework(requestId);
+      return;
+    } catch {
+      // fallback to mock-only
+    } finally {
+      setRejecting(false);
+    }
+    sendRework(requestId);
+  }
 
   return (
     <Screen>
@@ -61,8 +102,8 @@ export default function CitizenRequestDetailsScreen() {
 
       {canCitizenDecide ? (
         <Section title="Действия жителя">
-          <Button onPress={() => confirmDone(request.id)}>✅ Подтвердить выполнение</Button>
-          <Button onPress={() => sendRework(request.id)} variant="secondary">
+          <Button onPress={onConfirm} loading={confirming} disabled={confirming || rejecting}>✅ Подтвердить выполнение</Button>
+          <Button onPress={onReject} variant="secondary" loading={rejecting} disabled={confirming || rejecting}>
             🔁 Отправить на доработку
           </Button>
         </Section>

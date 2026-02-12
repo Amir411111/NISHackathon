@@ -16,6 +16,9 @@ export type Worker = {
 export type AppUser = {
   role: UserRole;
   workerId?: string;
+  id?: string;
+  email?: string;
+  digitalIdKey?: string;
 };
 
 export type RequestPriority = "LOW" | "MEDIUM" | "HIGH";

@@ -1,11 +1,12 @@
-# Urban Services & eGov — MVP оболочка (frontend-only)
+# Urban Services & eGov — MVP (Expo + optional backend)
 
 MVP мобильного приложения «Единая цифровая экосистема управления городским хозяйством и обращениями граждан».
 
-Ограничения кейса:
-- Без backend/API/БД/серверной логики
-- Все данные — mock (in-memory через Zustand)
-- Фокус: архитектура, UX, навигация, состояние, масштабируемость
+Режимы работы:
+- **Frontend-only**: все данные mock (in-memory через Zustand)
+- **С backend**: frontend подключается к REST API (JWT + MongoDB) без изменения структуры экранов
+
+Фокус: архитектура, UX, навигация, состояние, масштабируемость.
 
 ## Запуск
 
@@ -13,6 +14,19 @@ MVP мобильного приложения «Единая цифровая э
 npm install
 npx expo start
 ```
+
+### Подключение к backend (REST)
+
+1) Поднять backend в [backend](backend) (инструкция: [backend/README.md](backend/README.md))
+
+2) Указать URL API для Expo:
+
+- Windows/macOS/Linux:
+	- `EXPO_PUBLIC_API_URL=http://localhost:3000`
+
+Примечания:
+- Android Emulator: вместо `localhost` часто нужен `http://10.0.2.2:3000`
+- Реальное устройство: используйте IP вашего ПК в локальной сети (например `http://192.168.0.10:3000`)
 
 ## Архитектура
 

@@ -1,22 +1,36 @@
 import { Link } from "expo-router";
+import { useEffect } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { useNow } from "@/hooks/useNow";
+import { getTasks } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function WorkerWorklistScreen() {
   const now = useNow(1000);
-  const user = useAppStore((s) => s.user);
   const requests = useAppStore((s) => s.requests);
+  const replaceRequests = useAppStore((s) => s.replaceRequests);
   const isOverdue = useAppStore((s) => s.isRequestOverdue);
 
-  const workerId = user?.workerId;
+  // Backend already returns tasks for the current worker.
+  const tasks = requests.filter((r) => r.status === "ASSIGNED" || r.status === "IN_PROGRESS");
 
-  const tasks = requests.filter(
-    (r) => r.assignedWorkerId === workerId && (r.status === "ASSIGNED" || r.status === "IN_PROGRESS")
-  );
+  useEffect(() => {
+    let alive = true;
+    getTasks()
+      .then((items) => {
+        if (!alive) return;
+        replaceRequests(items);
+      })
+      .catch(() => {
+        // keep mock-only mode
+      });
+    return () => {
+      alive = false;
+    };
+  }, [replaceRequests]);
 
   return (
     <Screen scroll={false}>

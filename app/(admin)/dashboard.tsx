@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { HotspotsMap } from "@/components/HotspotsMap";
 import { Screen } from "@/components/Screen";
+import { analyticsSummary } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function AdminDashboardScreen() {
@@ -10,9 +12,28 @@ export default function AdminDashboardScreen() {
   const workers = useAppStore((s) => s.workers);
   const avgClosure = useAppStore((s) => s.getAverageClosureMinutes());
 
-  const total = requests.length;
-  const done = requests.filter((r) => r.status === "DONE").length;
-  const inProgress = requests.filter((r) => r.status === "IN_PROGRESS").length;
+  const [summary, setSummary] = useState<null | { total: number; overdue: number; byStatus: Record<string, number>; avgCloseMinutes: number | null }>(null);
+
+  useEffect(() => {
+    let alive = true;
+    analyticsSummary()
+      .then((s) => {
+        if (!alive) return;
+        setSummary(s);
+      })
+      .catch(() => {
+        // keep mock-only mode
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const total = summary?.total ?? requests.length;
+  const done = summary?.byStatus?.DONE ?? requests.filter((r) => r.status === "DONE").length;
+  const inProgress = summary?.byStatus?.IN_PROGRESS ?? requests.filter((r) => r.status === "IN_PROGRESS").length;
+  const overdue = summary?.overdue;
+  const avgClose = summary?.avgCloseMinutes ?? avgClosure;
 
   const contractorRatings = summarizeContractors(workers);
 
@@ -22,7 +43,8 @@ export default function AdminDashboardScreen() {
         <Metric label="Заявок всего" value={String(total)} />
         <Metric label="В работе" value={String(inProgress)} />
         <Metric label="Выполнено" value={String(done)} />
-        <Metric label="Среднее время закрытия" value={avgClosure === null ? "—" : `${avgClosure} мин`} />
+        {typeof overdue === "number" ? <Metric label="Просрочено" value={String(overdue)} /> : null}
+        <Metric label="Среднее время закрытия" value={avgClose === null ? "—" : `${avgClose} мин`} />
       </Card>
 
       <Card title="Рейтинг подрядчиков (mock)">
