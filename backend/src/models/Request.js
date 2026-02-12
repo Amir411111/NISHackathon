@@ -50,6 +50,7 @@ const RequestSchema = new mongoose.Schema(
     workStartedAt: { type: Date, default: null },
     workEndedAt: { type: Date, default: null },
     citizenConfirmedAt: { type: Date, default: null },
+    citizenRating: { type: Number, default: null, min: 1, max: 5 },
     reworkCount: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }

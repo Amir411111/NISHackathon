@@ -11,11 +11,21 @@ async function summary(_env, _req, res) {
 
   const overdue = all.filter((r) => r.isOverdue).length;
 
-  const confirmed = all.filter((r) => r.citizenConfirmedAt);
-  const avgCloseMinutes = confirmed.length
+  const closed = all
+    .map((r) => {
+      const closeAt = r.workEndedAt || r.citizenConfirmedAt;
+      if (!closeAt) return null;
+      const created = new Date(r.createdAt).getTime();
+      const ended = new Date(closeAt).getTime();
+      if (!Number.isFinite(created) || !Number.isFinite(ended) || ended < created) return null;
+      return ended - created;
+    })
+    .filter((v) => typeof v === "number");
+
+  const avgCloseMinutes = closed.length
     ? Math.round(
-        confirmed.reduce((sum, r) => sum + (new Date(r.citizenConfirmedAt).getTime() - new Date(r.createdAt).getTime()), 0) /
-          confirmed.length /
+        closed.reduce((sum, ms) => sum + ms, 0) /
+          closed.length /
           60000
       )
     : null;

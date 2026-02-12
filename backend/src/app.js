@@ -29,6 +29,15 @@ function createApp(env) {
   ensureUploadDir();
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+  app.get("/", (_req, res) =>
+    res.json({
+      ok: true,
+      service: "urban-services-backend",
+      health: "/health",
+      auth: "/auth/login",
+    })
+  );
+
   app.get("/health", (_req, res) => res.json({ ok: true }));
 
   // Auth routes: /register and /login are public.

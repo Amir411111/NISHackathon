@@ -18,6 +18,15 @@ function signToken(env, user) {
   );
 }
 
+function normalizedRating(user) {
+  const count = Number.isFinite(user.ratingCount) ? user.ratingCount : 0;
+  const avg = Number.isFinite(user.ratingAvg) ? user.ratingAvg : 5;
+  return {
+    ratingCount: count,
+    ratingAvg: count > 0 ? avg : 5,
+  };
+}
+
 async function register(env, req, res) {
   const { email, password, role } = req.body || {};
   if (!email || !password || !role) return res.status(400).json({ error: "email, password, role are required" });
@@ -51,6 +60,7 @@ async function register(env, req, res) {
   if (!user) return res.status(500).json({ error: "Failed to create user" });
 
   const token = signToken(env, user);
+  const rating = normalizedRating(user);
   return res.json({
     token,
     user: {
@@ -59,6 +69,8 @@ async function register(env, req, res) {
       role: user.role,
       points: user.points,
       digitalIdKey: user.digitalIdKey,
+      ratingAvg: rating.ratingAvg,
+      ratingCount: rating.ratingCount,
     },
   });
 }
@@ -93,6 +105,7 @@ async function login(env, req, res) {
   }
 
   const token = signToken(env, user);
+  const rating = normalizedRating(user);
   return res.json({
     token,
     user: {
@@ -101,6 +114,8 @@ async function login(env, req, res) {
       role: user.role,
       points: user.points,
       digitalIdKey: user.digitalIdKey,
+      ratingAvg: rating.ratingAvg,
+      ratingCount: rating.ratingCount,
     },
   });
 }
@@ -123,6 +138,7 @@ async function me(_env, req, res) {
       }
     }
   }
+  const rating = normalizedRating(user);
   return res.json({
     user: {
       id: user._id.toString(),
@@ -130,6 +146,8 @@ async function me(_env, req, res) {
       role: user.role,
       points: user.points,
       digitalIdKey: user.digitalIdKey,
+      ratingAvg: rating.ratingAvg,
+      ratingCount: rating.ratingCount,
       createdAt: user.createdAt,
     },
   });

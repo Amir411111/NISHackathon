@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
 import { RequestCard } from "@/components/RequestCard";
@@ -26,6 +26,7 @@ export default function CitizenRequestDetailsScreen() {
   const syncMe = useAppStore((s) => s.syncMe);
   const [confirming, setConfirming] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [rating, setRating] = useState<number>(5);
 
   if (!request) {
     return (
@@ -47,17 +48,18 @@ export default function CitizenRequestDetailsScreen() {
     if (confirming || rejecting) return;
     try {
       setConfirming(true);
-      const updated = await citizenConfirm(requestId);
+      const updated = await citizenConfirm(requestId, rating);
       upsertRequest(updated);
-      confirmDone(requestId);
+      confirmDone(requestId, rating);
       await syncMe();
       return;
-    } catch {
-      // fallback to mock-only
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || e?.message || "Не удалось сохранить оценку и подтвердить выполнение.";
+      Alert.alert("Ошибка", String(msg));
+      return;
     } finally {
       setConfirming(false);
     }
-    confirmDone(requestId);
   }
 
   async function onReject() {
@@ -102,7 +104,16 @@ export default function CitizenRequestDetailsScreen() {
 
       {canCitizenDecide ? (
         <Section title="Действия жителя">
-          <Button onPress={onConfirm} loading={confirming} disabled={confirming || rejecting}>✅ Подтвердить выполнение</Button>
+          <Text style={styles.rateLabel}>Оцените работу исполнителя *</Text>
+          <View style={styles.rateRow}>
+            {[1, 2, 3, 4, 5].map((v) => (
+              <Button key={v} onPress={() => setRating(v)} variant={rating === v ? "primary" : "secondary"} disabled={confirming || rejecting}>
+                {v}★
+              </Button>
+            ))}
+          </View>
+
+          <Button onPress={onConfirm} loading={confirming} disabled={confirming || rejecting || !rating}>✅ Подтвердить выполнение</Button>
           <Button onPress={onReject} variant="secondary" loading={rejecting} disabled={confirming || rejecting}>
             🔁 Отправить на доработку
           </Button>
@@ -112,6 +123,7 @@ export default function CitizenRequestDetailsScreen() {
       {request.citizenConfirmedAt ? (
         <View style={styles.confirmed}>
           <Text style={styles.confirmedText}>Подтверждено жителем ✅</Text>
+          <Text style={styles.confirmedRate}>Оценка исполнителю: {request.citizenRating ?? 5} / 5</Text>
         </View>
       ) : null}
     </Screen>
@@ -144,6 +156,9 @@ const styles = StyleSheet.create({
   photoEmptyText: { fontWeight: "800", color: "#666" },
   mockPhoto: { backgroundColor: "#fafafa", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#eee" },
   mockText: { fontWeight: "900", color: "#666" },
+  rateLabel: { fontSize: 13, fontWeight: "800", color: "#333" },
+  rateRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   confirmed: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: "#eee", backgroundColor: "#f7f7f7" },
   confirmedText: { fontWeight: "900", color: "#111" },
+  confirmedRate: { marginTop: 6, fontWeight: "800", color: "#333" },
 });

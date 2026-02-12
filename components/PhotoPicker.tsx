@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
 
@@ -12,9 +12,134 @@ export function PhotoPicker(props: {
 }) {
   const [busy, setBusy] = useState(false);
 
+  async function captureFromWebStream(): Promise<string | undefined> {
+    if (typeof window === "undefined" || typeof document === "undefined") return undefined;
+
+    const mediaDevices = (navigator as any)?.mediaDevices;
+    if (!mediaDevices?.getUserMedia) return undefined;
+
+    let stream: MediaStream | null = null;
+    let videoEl: HTMLVideoElement | null = null;
+    let canvasEl: HTMLCanvasElement | null = null;
+
+    const cleanup = () => {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      if (videoEl?.parentNode) videoEl.parentNode.removeChild(videoEl);
+      if (canvasEl?.parentNode) canvasEl.parentNode.removeChild(canvasEl);
+    };
+
+    try {
+      stream = await mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+
+      videoEl = document.createElement("video");
+      videoEl.setAttribute("playsinline", "true");
+      videoEl.muted = true;
+      videoEl.autoplay = true;
+      videoEl.style.position = "fixed";
+      videoEl.style.left = "-9999px";
+      videoEl.srcObject = stream;
+      document.body.appendChild(videoEl);
+
+      await videoEl.play();
+      await new Promise((r) => setTimeout(r, 250));
+
+      const confirmed = window.confirm("Камера включена. Нажмите OK, чтобы сделать снимок.");
+      if (!confirmed) {
+        cleanup();
+        return undefined;
+      }
+
+      canvasEl = document.createElement("canvas");
+      const width = videoEl.videoWidth || 1280;
+      const height = videoEl.videoHeight || 720;
+      canvasEl.width = width;
+      canvasEl.height = height;
+      canvasEl.style.position = "fixed";
+      canvasEl.style.left = "-9999px";
+      document.body.appendChild(canvasEl);
+
+      const ctx = canvasEl.getContext("2d");
+      if (!ctx) {
+        cleanup();
+        return undefined;
+      }
+
+      ctx.drawImage(videoEl, 0, 0, width, height);
+      const dataUri = canvasEl.toDataURL("image/jpeg", 0.85);
+      cleanup();
+      return dataUri;
+    } catch {
+      cleanup();
+      return undefined;
+    }
+  }
+
+  async function pickFromWebCamera(): Promise<string | undefined> {
+    if (typeof document === "undefined" || typeof window === "undefined") return undefined;
+
+    return new Promise((resolve) => {
+      const input = document.createElement("input");
+      let settled = false;
+
+      const finish = (uri?: string) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("focus", onFocusBack);
+        input.onchange = null;
+        (input as any).oncancel = null;
+        if (input.parentNode) input.parentNode.removeChild(input);
+        resolve(uri);
+      };
+
+      const onFocusBack = () => {
+        // If picker was closed without selecting a file, many browsers emit only focus.
+        setTimeout(() => {
+          const file = input.files?.[0];
+          if (!file) finish(undefined);
+        }, 250);
+      };
+
+      input.type = "file";
+      input.accept = "image/*";
+      input.setAttribute("capture", "environment");
+      (input as any).capture = "environment";
+      input.style.position = "fixed";
+      input.style.left = "-9999px";
+      document.body.appendChild(input);
+
+      input.onchange = () => {
+        const file = input.files?.[0];
+        if (!file) {
+          finish(undefined);
+          return;
+        }
+        finish(URL.createObjectURL(file));
+      };
+      (input as any).oncancel = () => finish(undefined);
+
+      window.addEventListener("focus", onFocusBack);
+      input.click();
+    });
+  }
+
   async function pick(source: "library" | "camera") {
     try {
       setBusy(true);
+
+      if (Platform.OS === "web" && source === "camera") {
+        let cameraUri = await captureFromWebStream();
+        if (!cameraUri) cameraUri = await pickFromWebCamera();
+        if (!cameraUri) return;
+        props.onChange(cameraUri);
+        return;
+      }
+
       const perm = source === "camera" ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
         Alert.alert("Нет доступа", "Разрешение не выдано. Используем mock-фото.");
@@ -52,7 +177,7 @@ export function PhotoPicker(props: {
       </View>
       <View style={styles.actions}>
         <Button onPress={() => pick("camera")} loading={busy} variant="secondary">
-          Камера (mock)
+          Камера
         </Button>
         <Button onPress={() => pick("library")} loading={busy} variant="secondary">
           Галерея

@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -22,7 +23,6 @@ export default function WorkerTaskScreen() {
 
   const startWork = useAppStore((s) => s.startWork);
   const finishWork = useAppStore((s) => s.finishWork);
-  const setBeforePhoto = useAppStore((s) => s.setBeforePhoto);
   const setAfterPhoto = useAppStore((s) => s.setAfterPhoto);
   const upsertRequest = useAppStore((s) => s.upsertRequest);
   const [starting, setStarting] = useState(false);
@@ -93,11 +93,15 @@ export default function WorkerTaskScreen() {
       <RequestCard request={request} overdue={isOverdue} />
 
       <Section title="Фото 'До'">
-        <PhotoPicker label="До (mock)" uri={request.beforePhotoUri} onChange={(u) => setBeforePhoto(request.id, u)} />
+        <PhotoPreview uri={request.beforePhotoUri} />
       </Section>
 
       <Section title="Фото 'После'">
-        <PhotoPicker label="После (mock)" uri={request.afterPhotoUri} onChange={(u) => setAfterPhoto(request.id, u)} />
+        {request.status === "DONE" ? (
+          <PhotoPreview uri={request.afterPhotoUri} />
+        ) : (
+          <PhotoPicker label="После" uri={request.afterPhotoUri} onChange={(u) => setAfterPhoto(request.id, u)} />
+        )}
       </Section>
 
       <Section title="Таймер учета времени">
@@ -139,6 +143,26 @@ function Section(props: { title: string; children: ReactNode }) {
   );
 }
 
+function PhotoPreview(props: { uri?: string }) {
+  if (!props.uri) {
+    return (
+      <View style={styles.photoEmpty}>
+        <Text style={styles.photoEmptyText}>Фото не прикреплено</Text>
+      </View>
+    );
+  }
+
+  if (props.uri.startsWith("mock://")) {
+    return (
+      <View style={[styles.photo, styles.mockPhoto]}>
+        <Text style={styles.mockText}>MOCK PHOTO</Text>
+      </View>
+    );
+  }
+
+  return <Image source={{ uri: props.uri }} style={styles.photo} contentFit="cover" />;
+}
+
 const styles = StyleSheet.create({
   h1: { fontSize: 18, fontWeight: "900" },
   section: { gap: 10 },
@@ -147,4 +171,17 @@ const styles = StyleSheet.create({
   timer: { fontSize: 34, fontWeight: "900", color: "#111" },
   timerMeta: { fontSize: 12, fontWeight: "800", color: "#666" },
   hint: { fontSize: 12, color: "#666", fontWeight: "700" },
+  photo: { height: 180, borderRadius: 14, overflow: "hidden" },
+  photoEmpty: {
+    height: 180,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#eee",
+    backgroundColor: "#fafafa",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoEmptyText: { fontWeight: "800", color: "#666" },
+  mockPhoto: { backgroundColor: "#fafafa", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#eee" },
+  mockText: { fontWeight: "900", color: "#666" },
 });

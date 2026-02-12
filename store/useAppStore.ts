@@ -47,7 +47,7 @@ type AppState = {
   setAfterPhoto: (requestId: string, uri: string | undefined) => void;
   finishWork: (requestId: string) => void;
 
-  citizenConfirmDone: (requestId: string) => void;
+  citizenConfirmDone: (requestId: string, rating: number) => void;
   citizenSendRework: (requestId: string) => void;
 
   getRequestById: (id: string) => Request | undefined;
@@ -123,6 +123,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           id: me.id,
           email: me.email,
           digitalIdKey: me.digitalIdKey,
+          ratingAvg: me.ratingAvg,
+          ratingCount: me.ratingCount,
         },
         citizenPoints: typeof me.points === "number" ? me.points : get().citizenPoints,
       });
@@ -210,10 +212,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  citizenConfirmDone: (requestId) => {
+  citizenConfirmDone: (requestId, rating) => {
     set((s) => ({
       citizenPoints: s.citizenPoints + GAMIFICATION_POINTS_PER_CONFIRMED_REQUEST,
-      requests: s.requests.map((r) => (r.id === requestId ? { ...r, citizenConfirmedAt: Date.now(), updatedAt: Date.now() } : r)),
+      requests: s.requests.map((r) =>
+        r.id === requestId ? { ...r, citizenConfirmedAt: Date.now(), citizenRating: rating, updatedAt: Date.now() } : r
+      ),
     }));
   },
 

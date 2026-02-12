@@ -20,20 +20,26 @@ export default function CitizenNewRequestScreen() {
   const [description, setDescription] = useState("");
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [location, setLocation] = useState<RequestLocation | undefined>();
-  const [addressLabel, setAddressLabel] = useState("");
   const [priority, setPriority] = useState<RequestPriority>("MEDIUM");
   const [busy, setBusy] = useState(false);
 
-  const canSubmit = useMemo(() => description.trim().length >= 8, [description]);
+  const canSubmit = useMemo(() => description.trim().length >= 8 && Boolean(photoUri) && Boolean(location), [description, photoUri, location]);
 
   async function submit() {
-    if (!canSubmit) {
+    if (description.trim().length < 8) {
       Alert.alert("Недостаточно данных", "Добавьте описание (минимум 8 символов).");
       return;
     }
+    if (!photoUri) {
+      Alert.alert("Обязательное поле", "Добавьте фото проблемы.");
+      return;
+    }
+    if (!location) {
+      Alert.alert("Обязательное поле", "Укажите местоположение проблемы.");
+      return;
+    }
 
-    // Backend requires coordinates; if user didn't pick location, use a mock fallback.
-    const effectiveLocation: RequestLocation = location ?? { lat: 43.238949, lon: 76.889709, accuracy: 999 };
+    const effectiveLocation: RequestLocation = location;
 
     try {
       setBusy(true);
@@ -53,7 +59,7 @@ export default function CitizenNewRequestScreen() {
       setBusy(false);
     }
 
-    const id = createRequest({ category, description: description.trim(), priority, photoUri, location: effectiveLocation, addressLabel: addressLabel.trim() || undefined });
+    const id = createRequest({ category, description: description.trim(), priority, photoUri, location: effectiveLocation });
     router.replace(`/(citizen)/requests/${id}`);
   }
 
@@ -69,10 +75,6 @@ export default function CitizenNewRequestScreen() {
         <Input value={description} onChangeText={setDescription} placeholder="Опишите проблему…" multiline />
       </Field>
 
-      <Field label="Адрес (опционально)">
-        <Input value={addressLabel} onChangeText={setAddressLabel} placeholder="Напр.: ул. Абая, 10" />
-      </Field>
-
       <Field label="Срочность">
         <View style={styles.priorityRow}>
           <PriorityChip title="Low" subtitle="Низкая" active={priority === "LOW"} onPress={() => setPriority("LOW")} />
@@ -81,9 +83,11 @@ export default function CitizenNewRequestScreen() {
         </View>
       </Field>
 
-      <PhotoPicker label="Фото проблемы (mock)" uri={photoUri} onChange={setPhotoUri} />
+      <PhotoPicker label="Фото проблемы *" uri={photoUri} onChange={setPhotoUri} />
 
-      <LocationPicker value={location} onChange={setLocation} />
+      <Field label="Местоположение *">
+        <LocationPicker value={location} onChange={setLocation} />
+      </Field>
 
       <View style={{ height: 6 }} />
 

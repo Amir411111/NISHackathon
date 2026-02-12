@@ -24,6 +24,7 @@ type RequestDto = {
   workStartedAt?: string | null;
   workEndedAt?: string | null;
   citizenConfirmedAt?: string | null;
+  citizenRating?: number | null;
   reworkCount: number;
 };
 
@@ -75,6 +76,7 @@ function mapDto(dto: RequestDto): Request {
     priority: priorityFromBackend(dto.priority),
     reworkCount: dto.reworkCount ?? 0,
     citizenConfirmedAt: dto.citizenConfirmedAt ? new Date(dto.citizenConfirmedAt).getTime() : undefined,
+    citizenRating: typeof dto.citizenRating === "number" ? dto.citizenRating : undefined,
     workStartedAt: dto.workStartedAt ? new Date(dto.workStartedAt).getTime() : undefined,
     workEndedAt: dto.workEndedAt ? new Date(dto.workEndedAt).getTime() : undefined,
   };
@@ -137,8 +139,8 @@ export async function getMyRequests(): Promise<Request[]> {
   return res.data.items.map(mapDto);
 }
 
-export async function citizenConfirm(id: string): Promise<Request> {
-  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${id}/confirm`);
+export async function citizenConfirm(id: string, rating: number): Promise<Request> {
+  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${id}/confirm`, { rating });
   return mapDto(res.data.item);
 }
 

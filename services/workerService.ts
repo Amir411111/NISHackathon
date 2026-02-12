@@ -6,6 +6,7 @@ type WorkerDto = {
   name: string;
   contractorName: string;
   rating: number;
+  ratingCount?: number;
 };
 
 export async function getWorkers(): Promise<Worker[]> {
@@ -15,5 +16,6 @@ export async function getWorkers(): Promise<Worker[]> {
     name: w.name,
     contractorName: w.contractorName,
     rating: w.rating,
+    ratingCount: w.ratingCount,
   }));
 }

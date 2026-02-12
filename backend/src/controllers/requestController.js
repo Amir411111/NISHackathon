@@ -46,6 +46,7 @@ function mapRequestDoc(doc) {
     workStartedAt: doc.workStartedAt,
     workEndedAt: doc.workEndedAt,
     citizenConfirmedAt: doc.citizenConfirmedAt,
+    citizenRating: doc.citizenRating,
     reworkCount: doc.reworkCount,
   };
 }
@@ -119,11 +120,33 @@ async function citizenConfirm(_env, req, res) {
   if (doc.citizenId.toString() !== req.user.id) return res.status(403).json({ error: "Forbidden" });
   if (doc.status !== "DONE") return res.status(400).json({ error: "Request is not DONE" });
 
+  const rawRating = req.body?.rating;
+  const rating = Number(rawRating);
+
   if (!doc.citizenConfirmedAt) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "rating is required (1..5)" });
+    }
+    if (!doc.workerId) {
+      return res.status(400).json({ error: "Worker is not assigned" });
+    }
+
     doc.citizenConfirmedAt = new Date();
+    doc.citizenRating = rating;
     await doc.save();
 
     await User.findByIdAndUpdate(req.user.id, { $inc: { points: 10 } });
+
+    const worker = await User.findById(doc.workerId);
+    if (worker) {
+      const currentCount = Number.isFinite(worker.ratingCount) ? worker.ratingCount : 0;
+      const currentAvg = currentCount > 0 ? (Number.isFinite(worker.ratingAvg) ? worker.ratingAvg : 5) : 5;
+      const nextCount = currentCount + 1;
+      const nextAvg = ((currentAvg * currentCount) + rating) / nextCount;
+      worker.ratingCount = nextCount;
+      worker.ratingAvg = Number(nextAvg.toFixed(2));
+      await worker.save();
+    }
   }
 
   const updated = await Request.findById(id).populate("categoryId");

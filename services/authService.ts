@@ -6,11 +6,20 @@ type BackendRole = "citizen" | "worker" | "admin";
 
 type AuthResponse = {
   token: string;
-  user: { id: string; email: string; role: BackendRole; points: number; digitalIdKey?: string };
+  user: { id: string; email: string; role: BackendRole; points: number; digitalIdKey?: string; ratingAvg?: number; ratingCount?: number };
 };
 
 export type MeResponse = {
-  user: { id: string; email: string; role: BackendRole; points: number; digitalIdKey: string; createdAt?: string };
+  user: {
+    id: string;
+    email: string;
+    role: BackendRole;
+    points: number;
+    digitalIdKey: string;
+    ratingAvg?: number;
+    ratingCount?: number;
+    createdAt?: string;
+  };
 };
 
 function roleToBackend(role: UserRole): BackendRole {
@@ -65,7 +74,7 @@ export async function login(input: { email: string; password: string; workerId?:
   return session;
 }
 
-export async function getMe(): Promise<{ id: string; email: string; role: UserRole; points: number; digitalIdKey: string }>{
+export async function getMe(): Promise<{ id: string; email: string; role: UserRole; points: number; digitalIdKey: string; ratingAvg?: number; ratingCount?: number }> {
   const res = await apiClient.get<MeResponse>("/auth/me");
   return {
     id: res.data.user.id,
@@ -73,6 +82,8 @@ export async function getMe(): Promise<{ id: string; email: string; role: UserRo
     role: roleFromBackend(res.data.user.role),
     points: res.data.user.points,
     digitalIdKey: res.data.user.digitalIdKey,
+    ratingAvg: res.data.user.ratingAvg,
+    ratingCount: res.data.user.ratingCount,
   };
 }
 

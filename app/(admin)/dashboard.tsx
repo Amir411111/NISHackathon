@@ -5,11 +5,13 @@ import { StyleSheet, Text, View } from "react-native";
 import { HotspotsMap } from "@/components/HotspotsMap";
 import { Screen } from "@/components/Screen";
 import { analyticsSummary } from "@/services/requestService";
+import { getWorkers } from "@/services/workerService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function AdminDashboardScreen() {
   const requests = useAppStore((s) => s.requests);
   const workers = useAppStore((s) => s.workers);
+  const replaceWorkers = useAppStore((s) => s.replaceWorkers);
   const avgClosure = useAppStore((s) => s.getAverageClosureMinutes());
 
   const [summary, setSummary] = useState<null | { total: number; overdue: number; byStatus: Record<string, number>; avgCloseMinutes: number | null }>(null);
@@ -29,13 +31,28 @@ export default function AdminDashboardScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    getWorkers()
+      .then((items) => {
+        if (!alive) return;
+        replaceWorkers(items);
+      })
+      .catch(() => {
+        // keep fallback
+      });
+    return () => {
+      alive = false;
+    };
+  }, [replaceWorkers]);
+
   const total = summary?.total ?? requests.length;
   const done = summary?.byStatus?.DONE ?? requests.filter((r) => r.status === "DONE").length;
   const inProgress = summary?.byStatus?.IN_PROGRESS ?? requests.filter((r) => r.status === "IN_PROGRESS").length;
   const overdue = summary?.overdue;
   const avgClose = summary?.avgCloseMinutes ?? avgClosure;
 
-  const contractorRatings = summarizeContractors(workers);
+  const contractorRatings = workers;
 
   return (
     <Screen>
@@ -47,11 +64,12 @@ export default function AdminDashboardScreen() {
         <Metric label="Среднее время закрытия" value={avgClose === null ? "—" : `${avgClose} мин`} />
       </Card>
 
-      <Card title="Рейтинг подрядчиков (mock)">
-        {contractorRatings.map((c) => (
-          <View key={c.contractorName} style={styles.row}>
-            <Text style={styles.contractor}>{c.contractorName}</Text>
-            <Text style={styles.value}>⭐ {c.avgRating.toFixed(1)}</Text>
+      <Card title="Рейтинг подрядчиков">
+        {contractorRatings.length === 0 ? <Text style={styles.empty}>Исполнители пока не найдены</Text> : null}
+        {contractorRatings.map((w) => (
+          <View key={w.id} style={styles.row}>
+            <Text style={styles.contractor}>{w.name}</Text>
+            <Text style={styles.value}>⭐ {w.rating.toFixed(1)}</Text>
           </View>
         ))}
       </Card>
@@ -61,18 +79,6 @@ export default function AdminDashboardScreen() {
       </Card>
     </Screen>
   );
-}
-
-function summarizeContractors(workers: { contractorName: string; rating: number }[]) {
-  const map = new Map<string, { sum: number; count: number }>();
-  for (const w of workers) {
-    const cur = map.get(w.contractorName) ?? { sum: 0, count: 0 };
-    map.set(w.contractorName, { sum: cur.sum + w.rating, count: cur.count + 1 });
-  }
-  return [...map.entries()].map(([contractorName, v]) => ({
-    contractorName,
-    avgRating: v.sum / v.count,
-  }));
 }
 
 function Card(props: { title: string; children: ReactNode }) {
@@ -103,4 +109,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   contractor: { fontSize: 13, fontWeight: "800", color: "#111" },
   value: { fontSize: 13, fontWeight: "900", color: "#111" },
+  empty: { color: "#666", fontWeight: "700" },
 });

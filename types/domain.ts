@@ -10,7 +10,8 @@ export type Worker = {
   id: string;
   name: string;
   contractorName: string;
-  rating: number; // 0..5 (mock)
+  rating: number; // 0..5
+  ratingCount?: number;
 };
 
 export type AppUser = {
@@ -19,6 +20,8 @@ export type AppUser = {
   id?: string;
   email?: string;
   digitalIdKey?: string;
+  ratingAvg?: number;
+  ratingCount?: number;
 };
 
 export type RequestPriority = "LOW" | "MEDIUM" | "HIGH";
@@ -55,6 +58,7 @@ export type Request = {
 
   reworkCount: number;
   citizenConfirmedAt?: number;
+  citizenRating?: number;
 
   workStartedAt?: number;
   workEndedAt?: number;

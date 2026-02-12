@@ -5,7 +5,7 @@ const { listWorkers } = require("../controllers/workerController");
 function buildWorkerRoutes(env) {
   const r = express.Router();
 
-  r.get("/", requireRole("admin"), (req, res) => listWorkers(env, req, res));
+  r.get("/", requireRole("admin", "worker"), (req, res) => listWorkers(env, req, res));
 
   return r;
 }

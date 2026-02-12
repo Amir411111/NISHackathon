@@ -23,6 +23,7 @@ export default function AdminDispatcherScreen() {
   const [assignFor, setAssignFor] = useState<string | null>(null);
   const [assigningWorkerId, setAssigningWorkerId] = useState<string | null>(null);
   const [assignedWorkerId, setAssignedWorkerId] = useState<string | null>(null);
+  const [assignedWorkerName, setAssignedWorkerName] = useState<string | null>(null);
   const assignInFlightRef = useRef(false);
 
   const selectedRequest = useMemo(() => (assignFor ? requests.find((r) => r.id === assignFor) : null), [assignFor, requests]);
@@ -113,6 +114,7 @@ export default function AdminDispatcherScreen() {
 
                     assignInFlightRef.current = true;
                     setAssignedWorkerId(null);
+                    setAssignedWorkerName(null);
                     setAssigningWorkerId(w.id);
                     try {
                       const updated = await adminAssign(assignFor, w.id);
@@ -124,9 +126,11 @@ export default function AdminDispatcherScreen() {
                     }
 
                     setAssignedWorkerId(w.id);
+                    setAssignedWorkerName(w.name);
                     setTimeout(() => {
                       assignInFlightRef.current = false;
                       setAssignedWorkerId(null);
+                      setAssignedWorkerName(null);
                       setAssignFor(null);
                     }, 800);
                   }}
@@ -139,7 +143,7 @@ export default function AdminDispatcherScreen() {
                       <Text style={styles.assignStateText}>Назначаем...</Text>
                     </View>
                   ) : null}
-                  {assignedWorkerId === w.id ? <Text style={styles.assignSuccess}>Успешно назначен</Text> : null}
+                  {assignedWorkerId === w.id ? <Text style={styles.assignSuccess}>Успешно назначен: {assignedWorkerName ?? w.name}</Text> : null}
                 </Pressable>
               ))}
             </View>
