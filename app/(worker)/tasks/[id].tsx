@@ -53,10 +53,9 @@ export default function WorkerTaskScreen() {
       setStarting(true);
       const updated = await apiStartTask(requestId);
       upsertRequest(updated);
-      startWork(requestId);
       return;
     } catch {
-      // fallback
+      // fallback to local-only mode
     } finally {
       setStarting(false);
     }
@@ -74,8 +73,10 @@ export default function WorkerTaskScreen() {
     try {
       setCompleting(true);
       const updated = await completeTask(requestId, afterPhotoUri);
+      if (!updated.afterPhotoUri) {
+        updated.afterPhotoUri = afterPhotoUri;
+      }
       upsertRequest(updated);
-      finishWork(requestId);
       return;
     } catch (e: any) {
       const msg =
@@ -83,6 +84,7 @@ export default function WorkerTaskScreen() {
         e?.message ||
         "Не удалось завершить задачу. Проверьте, что backend запущен и фото прикрепилось.";
       Alert.alert("Ошибка", String(msg));
+      finishWork(requestId);
       return;
     } finally {
       setCompleting(false);
