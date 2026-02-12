@@ -1,12 +1,12 @@
+import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
 
 import { Button } from "@/components/Buttons";
 import { Field } from "@/components/Form";
 import { Screen } from "@/components/Screen";
-import { downloadDigitalIdFile, login, loginWithDigitalIdFile, logout as apiLogout, register, type RegisterResult } from "@/services/authService";
+import { logout as apiLogout, downloadDigitalIdFile, login, loginWithDigitalIdFile, register, type RegisterResult } from "@/services/authService";
 import { useAppStore } from "@/store/useAppStore";
 import type { UserRole } from "@/types/domain";
 

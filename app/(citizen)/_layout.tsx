@@ -15,8 +15,8 @@ export default function CitizenLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Мои заявки",
-          headerRight: () => <HeaderButton title="Новая" onPress={() => router.push("/(citizen)/new")} />,
+          title: "eOtinish",
+          headerRight: () => <HeaderButton title="Мои заявки" onPress={() => router.push("/(citizen)")} />,
           headerLeft: () => (
             <HeaderButton
               title="Выйти"
