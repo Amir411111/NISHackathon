@@ -12,6 +12,7 @@ export default function WorkerLayout() {
         name="index"
         options={{
           title: "Рабочий лист",
+          headerRight: () => <HeaderButton title="Профиль" onPress={() => router.push("/(worker)/user")} />,
           headerLeft: () => (
             <HeaderButton
               title="Выйти"
@@ -24,6 +25,7 @@ export default function WorkerLayout() {
         }}
       />
       <Stack.Screen name="tasks/[id]" options={{ title: "Выполнение" }} />
+      <Stack.Screen name="user" options={{ title: "Профиль" }} />
     </Stack>
   );
 }

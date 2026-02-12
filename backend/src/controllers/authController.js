@@ -28,16 +28,21 @@ function normalizedRating(user) {
   };
 }
 
+function normalizedFullName(user) {
+  return String(user?.fullName || "").trim();
+}
+
 function isStrongPassword(password) {
   const p = String(password || "");
   return p.length >= 6 && /[A-Za-z]/.test(p) && /\d/.test(p);
 }
 
 async function register(env, req, res) {
-  const { email, password, role, digitalFilePassword } = req.body || {};
-  if (!email || !password || !role) {
-    return res.status(400).json({ error: "Email, пароль и роль обязательны" });
+  const { fullName, email, password, role, digitalFilePassword } = req.body || {};
+  if (!fullName || !email || !password || !role) {
+    return res.status(400).json({ error: "ФИО, email, пароль и роль обязательны" });
   }
+  if (String(fullName).trim().length < 3) return res.status(400).json({ error: "Укажите корректное ФИО" });
   if (!/[\S]+@[\S]+\.[\S]+/.test(email)) return res.status(400).json({ error: "Некорректный email" });
   if (!isStrongPassword(password)) {
     return res.status(400).json({ error: "Пароль должен быть не менее 6 символов и содержать буквы и цифры" });
@@ -54,6 +59,7 @@ async function register(env, req, res) {
     try {
       // eslint-disable-next-line no-await-in-loop
       user = await User.create({
+        fullName: String(fullName).trim(),
         email: String(email).toLowerCase(),
         passwordHash,
         role,
@@ -79,6 +85,7 @@ async function register(env, req, res) {
     token,
     user: {
       id: user._id.toString(),
+      fullName: normalizedFullName(user),
       email: user.email,
       role: user.role,
       points: user.points,
@@ -145,6 +152,7 @@ async function login(env, req, res) {
     token,
     user: {
       id: user._id.toString(),
+      fullName: normalizedFullName(user),
       email: user.email,
       role: user.role,
       points: user.points,
@@ -176,6 +184,7 @@ async function me(_env, req, res) {
   return res.json({
     user: {
       id: user._id.toString(),
+      fullName: normalizedFullName(user),
       email: user.email,
       role: user.role,
       points: user.points,

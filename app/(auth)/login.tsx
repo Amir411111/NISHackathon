@@ -17,6 +17,7 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [role, setRole] = useState<UserRole>("CITIZEN");
   const [loginMethod, setLoginMethod] = useState<"email" | "digital-file">("email");
+  const [fullName, setFullName] = useState("");
   const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,8 +38,8 @@ export default function LoginScreen() {
       if (loginMethod === "email") return identifier.trim().length > 0 && password.length > 0;
       return (!!selectedFile || !!selectedNativeFile) && password.length > 0;
     }
-    return email.trim().includes("@") && isStrongPassword && password === confirmPassword;
-  }, [mode, loginMethod, identifier, email, password, confirmPassword, selectedFile, selectedNativeFile, isStrongPassword]);
+    return fullName.trim().length >= 3 && email.trim().includes("@") && isStrongPassword && password === confirmPassword;
+  }, [mode, loginMethod, fullName, identifier, email, password, confirmPassword, selectedFile, selectedNativeFile, isStrongPassword]);
 
   const roleTitle = useMemo(() => {
     if (role === "CITIZEN") return "Житель";
@@ -81,7 +82,7 @@ export default function LoginScreen() {
         }
         loginAs(session.role);
       } else {
-        const registered = await register({ email: email.trim(), password, role });
+        const registered = await register({ fullName: fullName.trim(), email: email.trim(), password, role });
         loginAs(registered.session.role);
         setIssuedFile(registered.digitalIdFile || null);
 
@@ -198,16 +199,21 @@ export default function LoginScreen() {
           )}
         </>
       ) : (
-        <Field label="Email">
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder="user@mail.com"
-            style={styles.input}
-          />
-        </Field>
+        <>
+          <Field label="ФИО">
+            <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Иванов Иван Иванович" style={styles.input} />
+          </Field>
+          <Field label="Email">
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="user@mail.com"
+              style={styles.input}
+            />
+          </Field>
+        </>
       )}
 
       <Field label="Пароль">
@@ -240,6 +246,9 @@ export default function LoginScreen() {
 
       {mode === "register" && !isStrongPassword && password.length > 0 ? (
         <Text style={styles.validationText}>Пароль должен быть не менее 6 символов и содержать буквы и цифры.</Text>
+      ) : null}
+      {mode === "register" && fullName.trim().length > 0 && fullName.trim().length < 3 ? (
+        <Text style={styles.validationText}>Введите корректное ФИО (минимум 3 символа).</Text>
       ) : null}
       {mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? (
         <Text style={styles.validationText}>Пароли не совпадают.</Text>

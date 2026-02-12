@@ -16,7 +16,7 @@ export default function CitizenLayout() {
         name="index"
         options={{
           title: "eOtinish",
-          headerRight: () => <HeaderButton title="Мои заявки" onPress={() => router.push("/(citizen)")} />,
+          headerRight: () => <HeaderButton title="Профиль" onPress={() => router.push("/(citizen)/user")} />,
           headerLeft: () => (
             <HeaderButton
               title="Выйти"
@@ -30,6 +30,7 @@ export default function CitizenLayout() {
       />
       <Stack.Screen name="new" options={{ title: "Подать заявку" }} />
       <Stack.Screen name="requests/[id]" options={{ title: "Заявка" }} />
+      <Stack.Screen name="user" options={{ title: "Профиль" }} />
     </Stack>
   );
 }

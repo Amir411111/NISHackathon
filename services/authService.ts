@@ -9,7 +9,7 @@ type BackendRole = "citizen" | "worker" | "admin";
 
 type AuthResponse = {
   token: string;
-  user: { id: string; email: string; role: BackendRole; points: number; digitalIdKey?: string; ratingAvg?: number; ratingCount?: number };
+  user: { id: string; fullName: string; email: string; role: BackendRole; points: number; digitalIdKey?: string; ratingAvg?: number; ratingCount?: number };
   digitalIdFile?: {
     filename: string;
     mimeType: string;
@@ -20,6 +20,7 @@ type AuthResponse = {
 export type MeResponse = {
   user: {
     id: string;
+    fullName: string;
     email: string;
     role: BackendRole;
     points: number;
@@ -59,8 +60,9 @@ export async function logout(): Promise<void> {
   await clearSession();
 }
 
-export async function register(input: { email: string; password: string; role: UserRole; workerId?: string }): Promise<RegisterResult> {
+export async function register(input: { fullName: string; email: string; password: string; role: UserRole; workerId?: string }): Promise<RegisterResult> {
   const res = await apiClient.post<AuthResponse>("/auth/register", {
+    fullName: input.fullName,
     email: input.email,
     password: input.password,
     role: roleToBackend(input.role),
@@ -171,10 +173,11 @@ export async function downloadDigitalIdFile(file: { filename: string; mimeType: 
   return true;
 }
 
-export async function getMe(): Promise<{ id: string; email: string; role: UserRole; points: number; digitalIdKey?: string; ratingAvg?: number; ratingCount?: number }> {
+export async function getMe(): Promise<{ id: string; fullName: string; email: string; role: UserRole; points: number; digitalIdKey?: string; ratingAvg?: number; ratingCount?: number }> {
   const res = await apiClient.get<MeResponse>("/auth/me");
   return {
     id: res.data.user.id,
+    fullName: res.data.user.fullName,
     email: res.data.user.email,
     role: roleFromBackend(res.data.user.role),
     points: res.data.user.points,
@@ -204,7 +207,7 @@ export async function demoLogin(role: UserRole, opts?: { workerId?: string }): P
   }
 
   try {
-    await register({ email: primaryEmail, password, role, workerId: opts?.workerId });
+    await register({ fullName: `Demo ${base}`, email: primaryEmail, password, role, workerId: opts?.workerId });
   } catch (e: any) {
     // user exists
     if (e?.response?.status !== 409) throw e;
@@ -218,6 +221,6 @@ export async function demoLogin(role: UserRole, opts?: { workerId?: string }): P
   }
 
   const uniqueEmail = `${base}.${Date.now()}@local.test`;
-  await register({ email: uniqueEmail, password, role, workerId: opts?.workerId });
+  await register({ fullName: `Demo ${base}`, email: uniqueEmail, password, role, workerId: opts?.workerId });
   return login({ email: uniqueEmail, password, workerId: opts?.workerId });
 }

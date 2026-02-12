@@ -18,7 +18,9 @@ export type AppUser = {
   role: UserRole;
   workerId?: string;
   id?: string;
+  fullName?: string;
   email?: string;
+  points?: number;
   digitalIdKey?: string;
   ratingAvg?: number;
   ratingCount?: number;

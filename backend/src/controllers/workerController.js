@@ -10,7 +10,7 @@ async function listWorkers(_env, _req, res) {
       ? (Number.isFinite(u.ratingAvg) ? u.ratingAvg : 5)
       : 5,
     id: u._id.toString(),
-    name: u.email.split("@")[0] || u.email,
+    name: String(u.fullName || "").trim() || u.email.split("@")[0] || u.email,
     contractorName: "—",
     email: u.email,
     digitalIdKey: u.digitalIdKey,
