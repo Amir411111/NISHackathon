@@ -1,16 +1,18 @@
 import * as DocumentPicker from "expo-document-picker";
-import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
 import { Field } from "@/components/Form";
 import { Screen } from "@/components/Screen";
+import { ui } from "@/constants/ui";
 import { logout as apiLogout, downloadDigitalIdFile, login, loginWithDigitalIdFile, register, type RegisterResult } from "@/services/authService";
 import { useAppStore } from "@/store/useAppStore";
 import type { UserRole } from "@/types/domain";
 
 export default function LoginScreen() {
+  const { mode: modeParam } = useLocalSearchParams<{ mode?: string }>();
   const loginAs = useAppStore((s) => s.loginAs);
   const syncMe = useAppStore((s) => s.syncMe);
 
@@ -27,6 +29,11 @@ export default function LoginScreen() {
   const [errorText, setErrorText] = useState("");
   const [hintText, setHintText] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (modeParam === "register") setMode("register");
+    if (modeParam === "login") setMode("login");
+  }, [modeParam]);
 
   const isStrongPassword = useMemo(() => {
     return password.length >= 6 && /[A-Za-z]/.test(password) && /\d/.test(password);
@@ -289,65 +296,65 @@ function RoleChip(props: { title: string; subtitle: string; active: boolean; onP
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: 22, fontWeight: "900", color: "#111" },
-  p: { fontSize: 14, color: "#444", lineHeight: 20 },
+  h1: { fontSize: 28, fontWeight: "900", color: ui.colors.text },
+  p: { fontSize: 14, color: ui.colors.textMuted, lineHeight: 20 },
 
   modeRow: { flexDirection: "row", gap: 10 },
   modeChip: {
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
+    borderColor: ui.colors.border,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: ui.colors.surfaceMuted,
   },
-  modeChipActive: { borderColor: "#111", backgroundColor: "#f7f7f7" },
-  modeText: { fontSize: 13, fontWeight: "900", color: "#555" },
-  modeTextActive: { color: "#111" },
+  modeChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
+  modeText: { fontSize: 13, fontWeight: "900", color: ui.colors.textMuted },
+  modeTextActive: { color: ui.colors.primary },
 
   roleRow: { flexDirection: "row", gap: 10 },
   roleChip: {
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
+    borderColor: ui.colors.border,
     paddingVertical: 12,
     alignItems: "center",
     gap: 2,
-    backgroundColor: "#fff",
+    backgroundColor: ui.colors.surfaceMuted,
   },
-  roleChipActive: { borderColor: "#111", backgroundColor: "#f7f7f7" },
-  roleTitle: { fontSize: 14, fontWeight: "900", color: "#555" },
-  roleTitleActive: { color: "#111" },
-  roleSub: { fontSize: 12, fontWeight: "700", color: "#777" },
-  roleSubActive: { color: "#111" },
+  roleChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
+  roleTitle: { fontSize: 14, fontWeight: "900", color: ui.colors.textMuted },
+  roleTitleActive: { color: ui.colors.primary },
+  roleSub: { fontSize: 12, fontWeight: "700", color: ui.colors.textMuted },
+  roleSubActive: { color: ui.colors.primary },
 
   input: {
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    backgroundColor: "#fff",
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
   },
 
-  summary: { padding: 12, borderRadius: 14, backgroundColor: "#fafafa", borderWidth: 1, borderColor: "#eee" },
-  summaryTitle: { fontSize: 12, color: "#666", fontWeight: "800" },
-  summaryValue: { marginTop: 4, fontSize: 16, fontWeight: "900", color: "#111" },
-  key: { marginTop: 8, fontSize: 12, fontWeight: "900", color: "#111" },
-  keyHint: { marginTop: 2, fontSize: 11, fontWeight: "700", color: "#666" },
+  summary: { padding: 12, borderRadius: 14, backgroundColor: ui.colors.surfaceMuted, borderWidth: 1, borderColor: ui.colors.border },
+  summaryTitle: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "800" },
+  summaryValue: { marginTop: 4, fontSize: 16, fontWeight: "900", color: ui.colors.text },
+  key: { marginTop: 8, fontSize: 12, fontWeight: "900", color: ui.colors.text },
+  keyHint: { marginTop: 2, fontSize: 11, fontWeight: "700", color: ui.colors.textMuted },
   pickFileBtn: {
     borderWidth: 1,
-    borderColor: "#e5e5e5",
+    borderColor: ui.colors.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: "#fff",
+    backgroundColor: ui.colors.surfaceMuted,
   },
-  pickFileBtnText: { fontSize: 14, fontWeight: "800", color: "#111" },
-  validationText: { marginTop: -6, fontSize: 12, fontWeight: "700", color: "#a16207" },
-  errorText: { marginTop: 8, fontSize: 13, fontWeight: "800", color: "#b91c1c" },
-  hintText: { marginTop: 8, fontSize: 13, fontWeight: "700", color: "#065f46" },
+  pickFileBtnText: { fontSize: 14, fontWeight: "800", color: ui.colors.primary },
+  validationText: { marginTop: -6, fontSize: 12, fontWeight: "700", color: ui.colors.warning },
+  errorText: { marginTop: 8, fontSize: 13, fontWeight: "800", color: ui.colors.danger },
+  hintText: { marginTop: 8, fontSize: 13, fontWeight: "700", color: ui.colors.primary },
 });

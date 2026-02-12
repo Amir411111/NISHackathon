@@ -6,6 +6,7 @@ import { Button } from "@/components/Buttons";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { ACTIVE_CITIZEN_BADGE_THRESHOLD } from "@/constants/sla";
+import { ui } from "@/constants/ui";
 import { useNow } from "@/hooks/useNow";
 import { getMyRequests } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
@@ -94,10 +95,10 @@ function SectionTitle(props: { text: string; count: number }) {
 
 const styles = StyleSheet.create({
   top: { padding: 16, gap: 12 },
-  gamification: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fafafa", gap: 6 },
-  points: { fontSize: 16, fontWeight: "900", color: "#111" },
-  badge: { fontSize: 12, fontWeight: "800", color: "#666" },
-  badgeActive: { color: "#111" },
+  gamification: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surfaceMuted, gap: 6 },
+  points: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
+  badge: { fontSize: 12, fontWeight: "800", color: ui.colors.textMuted },
+  badgeActive: { color: ui.colors.primary },
   list: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
   sectionHead: {
     marginTop: 8,
@@ -105,17 +106,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { fontSize: 15, fontWeight: "900", color: "#111" },
+  sectionTitle: { fontSize: 15, fontWeight: "900", color: ui.colors.text },
   sectionCount: {
     minWidth: 24,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: ui.colors.primarySoft,
     textAlign: "center",
     fontSize: 12,
     fontWeight: "800",
-    color: "#444",
+    color: ui.colors.primary,
   },
-  empty: { color: "#777", fontWeight: "700", marginBottom: 4 },
+  empty: { color: ui.colors.textMuted, fontWeight: "700", marginBottom: 4 },
 });

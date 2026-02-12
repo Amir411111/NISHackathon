@@ -1,6 +1,8 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
+import { ui } from "@/constants/ui";
+
 export function Field({ label, children }: PropsWithChildren<{ label: string }>) {
   return (
     <View style={styles.field}>
@@ -25,15 +27,16 @@ export function Input(props: { value: string; onChangeText: (v: string) => void;
 
 const styles = StyleSheet.create({
   field: { gap: 6 },
-  label: { fontSize: 13, color: "#444", fontWeight: "600" },
+  label: { fontSize: 13, color: ui.colors.textMuted, fontWeight: "600" },
   input: {
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
+    borderRadius: ui.radius.sm,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+    color: ui.colors.text,
   },
   inputMultiline: { minHeight: 96 },
 });

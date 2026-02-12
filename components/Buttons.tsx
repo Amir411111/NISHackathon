@@ -1,6 +1,8 @@
 import type { PropsWithChildren } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { ui } from "@/constants/ui";
+
 type ButtonVariant = "primary" | "secondary" | "danger";
 
 type Props = PropsWithChildren<{
@@ -25,8 +27,15 @@ export function Button({ onPress, disabled, loading, variant = "primary", childr
       ]}
     >
       <View style={styles.row}>
-        {loading ? <ActivityIndicator color={variant === "secondary" ? "#111" : "#fff"} /> : null}
-        <Text style={[styles.textBase, variant === "secondary" ? styles.textSecondary : styles.textPrimary]}>{children}</Text>
+        {loading ? <ActivityIndicator color={variant === "primary" ? ui.colors.surface : ui.colors.primary} /> : null}
+        <Text
+          style={[
+            styles.textBase,
+            variant === "secondary" ? styles.textSecondary : variant === "danger" ? styles.textDanger : styles.textPrimary,
+          ]}
+        >
+          {children}
+        </Text>
       </View>
     </Pressable>
   );
@@ -34,19 +43,21 @@ export function Button({ onPress, disabled, loading, variant = "primary", childr
 
 const styles = StyleSheet.create({
   base: {
+    minHeight: 50,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: ui.radius.pill,
     alignItems: "center",
     justifyContent: "center",
   },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
   pressed: { opacity: 0.9 },
   disabled: { opacity: 0.5 },
-  primary: { backgroundColor: "#111" },
-  secondary: { backgroundColor: "#f2f2f2" },
-  danger: { backgroundColor: "#b00020" },
+  primary: { backgroundColor: ui.colors.primary },
+  secondary: { backgroundColor: ui.colors.surfaceMuted, borderWidth: 1, borderColor: ui.colors.border },
+  danger: { backgroundColor: ui.colors.dangerSoft, borderWidth: 1, borderColor: "#f3c7c7" },
   textBase: { fontSize: 16, fontWeight: "600" },
-  textPrimary: { color: "#fff" },
-  textSecondary: { color: "#111" },
+  textPrimary: { color: ui.colors.surface },
+  textSecondary: { color: ui.colors.primary },
+  textDanger: { color: ui.colors.danger },
 });

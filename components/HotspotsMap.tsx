@@ -1,4 +1,5 @@
 import { CATEGORIES } from "@/constants/domain";
+import { ui } from "@/constants/ui";
 import type { Request } from "@/types/domain";
 import { StyleSheet, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
@@ -7,15 +8,15 @@ type ColorMode = "status" | "priority";
 
 function markerColor(r: Request, mode: ColorMode) {
   if (mode === "priority") {
-    if (r.priority === "HIGH") return "#d32f2f";
-    if (r.priority === "MEDIUM") return "#fb8c00";
-    return "#2e7d32";
+    if (r.priority === "HIGH") return "#ce6a67";
+    if (r.priority === "MEDIUM") return "#d2a15a";
+    return ui.colors.primary;
   }
 
-  if (r.status === "DONE") return "#2e7d32";
-  if (r.status === "IN_PROGRESS") return "#f9a825";
-  if (r.status === "ASSIGNED") return "#fb8c00";
-  return "#d32f2f";
+  if (r.status === "DONE") return ui.colors.primary;
+  if (r.status === "IN_PROGRESS") return "#8fbf9d";
+  if (r.status === "ASSIGNED") return "#d2a15a";
+  return "#ce6a67";
 }
 
 export function HotspotsMap(props: { requests: Request[]; colorBy?: ColorMode }) {
@@ -57,16 +58,16 @@ export function HotspotsMap(props: { requests: Request[]; colorBy?: ColorMode })
       <View style={styles.legendRow}>
         {mode === "priority" ? (
           <>
-            <LegendDot color="#d32f2f" label="Высокий" />
-            <LegendDot color="#fb8c00" label="Средний" />
-            <LegendDot color="#2e7d32" label="Низкий" />
+            <LegendDot color="#ce6a67" label="Высокий" />
+            <LegendDot color="#d2a15a" label="Средний" />
+            <LegendDot color="#56b37a" label="Низкий" />
           </>
         ) : (
           <>
-            <LegendDot color="#d32f2f" label="Новая" />
-            <LegendDot color="#fb8c00" label="Назначена" />
-            <LegendDot color="#f9a825" label="В работе" />
-            <LegendDot color="#2e7d32" label="Выполнена" />
+            <LegendDot color="#ce6a67" label="Новая" />
+            <LegendDot color="#d2a15a" label="Назначена" />
+            <LegendDot color="#8fbf9d" label="В работе" />
+            <LegendDot color="#56b37a" label="Выполнена" />
           </>
         )}
       </View>
@@ -89,15 +90,15 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   dot: { width: 10, height: 10, borderRadius: 999 },
-  legendText: { fontSize: 12, fontWeight: "700", color: "#555" },
+  legendText: { fontSize: 12, fontWeight: "700", color: ui.colors.textMuted },
   empty: {
     height: 220,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#eee",
-    backgroundColor: "#fafafa",
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyText: { fontWeight: "800", color: "#666" },
+  emptyText: { fontWeight: "800", color: ui.colors.textMuted },
 });
