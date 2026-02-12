@@ -74,7 +74,7 @@ export default function AdminDashboardScreen() {
         ))}
       </Card>
 
-      <Card title="Карта горячих точек (заглушка MapView)">
+      <Card title="Карта горячих точек города">
         <HotspotsMap requests={requests} />
       </Card>
     </Screen>
