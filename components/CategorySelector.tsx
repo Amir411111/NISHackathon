@@ -1,4 +1,5 @@
 import { CATEGORIES } from "@/constants/domain";
+import { ui } from "@/constants/ui";
 import type { Category } from "@/types/domain";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -22,13 +23,13 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#e5e5e5",
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
+    borderRadius: ui.radius.sm,
     paddingVertical: 10,
     alignItems: "center",
   },
-  itemActive: { borderColor: "#111", backgroundColor: "#f7f7f7" },
-  text: { fontSize: 14, fontWeight: "700", color: "#555" },
-  textActive: { color: "#111" },
+  itemActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
+  text: { fontSize: 14, fontWeight: "700", color: ui.colors.textMuted },
+  textActive: { color: ui.colors.primary },
 });

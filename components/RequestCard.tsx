@@ -1,5 +1,6 @@
 import { StatusBar } from "@/components/Status";
 import { CATEGORIES } from "@/constants/domain";
+import { ui } from "@/constants/ui";
 import type { Request, Worker } from "@/types/domain";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -53,21 +54,21 @@ function Badge(props: { text: string; tone: "neutral" | "danger" }) {
 const styles = StyleSheet.create({
   card: {
     padding: 14,
-    borderRadius: 14,
+    borderRadius: ui.radius.md,
     borderWidth: 1,
-    borderColor: "#eee",
-    backgroundColor: "#fff",
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surface,
     gap: 10,
   },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  title: { fontSize: 16, fontWeight: "900", color: "#111" },
-  sub: { fontSize: 13, color: "#666" },
-  coord: { fontSize: 12, color: "#666", fontWeight: "700" },
-  desc: { fontSize: 14, color: "#222" },
-  meta: { fontSize: 12, color: "#444" },
+  title: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
+  sub: { fontSize: 13, color: ui.colors.textMuted },
+  coord: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "700" },
+  desc: { fontSize: 14, color: ui.colors.text },
+  meta: { fontSize: 12, color: ui.colors.textMuted },
   badges: { flexDirection: "row", gap: 8, alignItems: "center" },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: "#f2f2f2" },
-  badgeDanger: { backgroundColor: "#ffe9ea" },
-  badgeText: { fontSize: 11, fontWeight: "800", color: "#444" },
-  badgeTextDanger: { color: "#b00020" },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: ui.radius.pill, backgroundColor: ui.colors.surfaceMuted },
+  badgeDanger: { backgroundColor: ui.colors.dangerSoft },
+  badgeText: { fontSize: 11, fontWeight: "800", color: ui.colors.textMuted },
+  badgeTextDanger: { color: ui.colors.danger },
 });

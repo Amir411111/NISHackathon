@@ -9,6 +9,7 @@ import { PhotoPicker } from "@/components/PhotoPicker";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { StatusTimeline } from "@/components/Status";
+import { ui } from "@/constants/ui";
 import { useNow } from "@/hooks/useNow";
 import { startTask as apiStartTask, completeTask } from "@/services/requestService";
 import { getWorkSeconds, useAppStore } from "@/store/useAppStore";
@@ -164,24 +165,24 @@ function PhotoPreview(props: { uri?: string }) {
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: 18, fontWeight: "900" },
+  h1: { fontSize: 18, fontWeight: "900", color: ui.colors.text },
   section: { gap: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: "900", color: "#111" },
-  timerBox: { padding: 14, borderRadius: 14, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fafafa", alignItems: "center", gap: 6 },
-  timer: { fontSize: 34, fontWeight: "900", color: "#111" },
-  timerMeta: { fontSize: 12, fontWeight: "800", color: "#666" },
-  hint: { fontSize: 12, color: "#666", fontWeight: "700" },
+  sectionTitle: { fontSize: 14, fontWeight: "900", color: ui.colors.text },
+  timerBox: { padding: 14, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surfaceMuted, alignItems: "center", gap: 6 },
+  timer: { fontSize: 34, fontWeight: "900", color: ui.colors.primary },
+  timerMeta: { fontSize: 12, fontWeight: "800", color: ui.colors.textMuted },
+  hint: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "700" },
   photo: { height: 180, borderRadius: 14, overflow: "hidden" },
   photoEmpty: {
     height: 180,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#eee",
-    backgroundColor: "#fafafa",
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
   },
-  photoEmptyText: { fontWeight: "800", color: "#666" },
-  mockPhoto: { backgroundColor: "#fafafa", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#eee" },
-  mockText: { fontWeight: "900", color: "#666" },
+  photoEmptyText: { fontWeight: "800", color: ui.colors.textMuted },
+  mockPhoto: { backgroundColor: ui.colors.surfaceMuted, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ui.colors.border },
+  mockText: { fontWeight: "900", color: ui.colors.textMuted },
 });

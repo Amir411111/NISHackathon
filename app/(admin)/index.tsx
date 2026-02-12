@@ -5,6 +5,7 @@ import { AIAssistant } from "@/components/AIAssistant";
 import { Button } from "@/components/Buttons";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
+import { ui } from "@/constants/ui";
 import { useNow } from "@/hooks/useNow";
 import { adminAssign, adminListAll } from "@/services/requestService";
 import { getWorkers } from "@/services/workerService";
@@ -187,28 +188,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { fontSize: 15, fontWeight: "900", color: "#111" },
+  sectionTitle: { fontSize: 15, fontWeight: "900", color: ui.colors.text },
   sectionCount: {
     minWidth: 24,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: ui.colors.primarySoft,
     textAlign: "center",
     fontSize: 12,
     fontWeight: "800",
-    color: "#444",
+    color: ui.colors.primary,
   },
-  empty: { color: "#777", fontWeight: "700", marginBottom: 4 },
+  empty: { color: ui.colors.textMuted, fontWeight: "700", marginBottom: 4 },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", alignItems: "center", justifyContent: "center", padding: 16 },
-  modalCard: { width: "100%", borderRadius: 16, backgroundColor: "#fff", padding: 16, gap: 12 },
-  modalTitle: { fontSize: 16, fontWeight: "900", color: "#111" },
-  modalSub: { fontSize: 12, color: "#666", fontWeight: "700" },
+  modalCard: { width: "100%", borderRadius: 16, backgroundColor: ui.colors.surface, padding: 16, gap: 12 },
+  modalTitle: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
+  modalSub: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "700" },
   workerList: { gap: 10, maxHeight: 360 },
-  workerItem: { borderRadius: 14, borderWidth: 1, borderColor: "#eee", padding: 12, gap: 4 },
-  workerName: { fontSize: 14, fontWeight: "900", color: "#111" },
-  workerMeta: { fontSize: 12, color: "#666" },
+  workerItem: { borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surfaceMuted, padding: 12, gap: 4 },
+  workerName: { fontSize: 14, fontWeight: "900", color: ui.colors.text },
+  workerMeta: { fontSize: 12, color: ui.colors.textMuted },
   assignState: { marginTop: 6, flexDirection: "row", alignItems: "center", gap: 8 },
-  assignStateText: { fontSize: 12, fontWeight: "800", color: "#444" },
-  assignSuccess: { marginTop: 6, fontSize: 12, fontWeight: "900", color: "#111" },
+  assignStateText: { fontSize: 12, fontWeight: "800", color: ui.colors.textMuted },
+  assignSuccess: { marginTop: 6, fontSize: 12, fontWeight: "900", color: ui.colors.primary },
 });

@@ -1,6 +1,8 @@
 import type { PropsWithChildren } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, View } from "react-native";
 
+import { ui } from "@/constants/ui";
+
 type Props = PropsWithChildren<{
   scroll?: boolean;
   padded?: boolean;
@@ -17,7 +19,7 @@ export function Screen({ children, scroll = true, padded = true }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
+  root: { flex: 1, backgroundColor: ui.colors.background },
   scroll: { flexGrow: 1 },
   content: { flex: 1 },
   padded: { padding: 16, gap: 12 },
