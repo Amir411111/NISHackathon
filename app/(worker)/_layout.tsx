@@ -1,0 +1,29 @@
+import { Stack, router } from "expo-router";
+
+import { HeaderButton } from "@/components/HeaderButton";
+import { useAppStore } from "@/store/useAppStore";
+
+export default function WorkerLayout() {
+  const logout = useAppStore((s) => s.logout);
+
+  return (
+    <Stack screenOptions={{ headerTitleAlign: "center" }}>
+      <Stack.Screen
+        name="index"
+        options={{
+          title: "Рабочий лист",
+          headerLeft: () => (
+            <HeaderButton
+              title="Выйти"
+              onPress={() => {
+                logout();
+                router.replace("/(auth)/login");
+              }}
+            />
+          ),
+        }}
+      />
+      <Stack.Screen name="tasks/[id]" options={{ title: "Выполнение" }} />
+    </Stack>
+  );
+}

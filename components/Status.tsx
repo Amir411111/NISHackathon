@@ -1,0 +1,58 @@
+import { STATUS_STEPS } from "@/constants/domain";
+import type { RequestStatus, StatusHistoryItem } from "@/types/domain";
+import { formatDateTime } from "@/utils/time";
+import { StyleSheet, Text, View } from "react-native";
+
+export function StatusBar(props: { status: RequestStatus }) {
+  const activeIndex = STATUS_STEPS.findIndex((s) => s.value === props.status);
+
+  return (
+    <View style={styles.row}>
+      {STATUS_STEPS.map((s, idx) => {
+        const isActive = idx <= activeIndex;
+        return (
+          <View key={s.value} style={styles.step}>
+            <View style={[styles.dot, isActive && styles.dotActive]} />
+            <Text style={[styles.stepLabel, isActive && styles.stepLabelActive]} numberOfLines={1}>
+              {s.label}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+export function StatusTimeline(props: { history: StatusHistoryItem[] }) {
+  const items = [...props.history].sort((a, b) => a.at - b.at);
+  return (
+    <View style={styles.timeline}>
+      {items.map((h) => (
+        <View key={`${h.status}_${h.at}`} style={styles.timelineItem}>
+          <Text style={styles.timelineStatus}>{STATUS_STEPS.find((s) => s.value === h.status)?.label ?? h.status}</Text>
+          <Text style={styles.timelineMeta}>{formatDateTime(h.at)} · {roleLabel(h.by)}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function roleLabel(r: string) {
+  if (r === "CITIZEN") return "Житель";
+  if (r === "WORKER") return "Исполнитель";
+  if (r === "ADMIN") return "Диспетчер";
+  return r;
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
+  step: { flex: 1, alignItems: "center", gap: 6 },
+  dot: { width: 10, height: 10, borderRadius: 10, backgroundColor: "#d0d0d0" },
+  dotActive: { backgroundColor: "#111" },
+  stepLabel: { fontSize: 11, color: "#888" },
+  stepLabelActive: { color: "#111", fontWeight: "700" },
+  timeline: { gap: 10 },
+  timelineItem: { padding: 12, borderRadius: 12, backgroundColor: "#fafafa", borderWidth: 1, borderColor: "#eee" },
+  timelineStatus: { fontSize: 14, fontWeight: "800", color: "#111" },
+  timelineMeta: { marginTop: 4, fontSize: 12, color: "#666" },
+});
