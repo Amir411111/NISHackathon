@@ -1,71 +1,109 @@
 import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Screen } from "@/components/Screen";
 import { ui } from "@/constants/ui";
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const actionsProgress = scrollY.interpolate({
+    inputRange: [0, 90],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
+
+  const actionsMaxHeight = actionsProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 94],
+    extrapolate: "clamp",
+  });
+
+  const actionsTranslateY = actionsProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-18, 0],
+    extrapolate: "clamp",
+  });
 
   return (
     <Screen scroll={false}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <View style={styles.topActions}>
-            <Pressable style={styles.topLink} onPress={() => router.push("/login")}>
-              <Text style={styles.topLinkText}>Войти</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.topLink, styles.topLinkPrimary]}
-              onPress={() => router.push({ pathname: "/login", params: { mode: "register" } })}
-            >
-              <Text style={styles.topLinkPrimaryText}>Регистрация</Text>
-            </Pressable>
+          <View style={styles.headerTopRow}>
+            <View style={styles.brandBadge}>
+              <Text style={styles.brandBadgeText}>eQala</Text>
+            </View>
+            <Text style={styles.logo}>🟢</Text>
           </View>
-
-          <Text style={styles.logo}>🟢</Text>
-          <Text style={styles.title}>Единая цифровая экосистема городских сервисов</Text>
-          <Text style={styles.subtitle}>
-            Житель → Исполнитель → Администратор в одном прозрачном процессе с фотофиксацией и контролем сроков.
+          <Text style={styles.title} numberOfLines={2}>
+            Городские обращения — просто и прозрачно
+          </Text>
+          <Text style={styles.subtitle} numberOfLines={2}>
+            Отправляйте заявку с фото, отслеживайте статус и получайте результат в одном приложении.
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} bounces={false} showsVerticalScrollIndicator={false}>
+        <Animated.View
+          style={[
+            styles.heroActions,
+            {
+              maxHeight: actionsMaxHeight,
+              opacity: actionsProgress,
+              transform: [{ translateY: actionsTranslateY }],
+            },
+          ]}
+        >
+          <Pressable style={styles.heroPrimaryBtn} onPress={() => router.push({ pathname: "/login", params: { mode: "register" } })}>
+            <Text style={styles.heroPrimaryBtnText}>Создать аккаунт</Text>
+          </Pressable>
+          <Pressable style={styles.heroSecondaryBtn} onPress={() => router.push("/login")}>
+            <Text style={styles.heroSecondaryBtnText}>Уже есть аккаунт? Войти</Text>
+          </Pressable>
+        </Animated.View>
+
+        <Animated.ScrollView
+          contentContainerStyle={styles.scrollContent}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+            useNativeDriver: false,
+          })}
+        >
           <SectionCard title="eQala" tone="primary">
+            <Text style={styles.infoText}>Единая платформа для обращений жителей и контроля городских задач.</Text>
             <Text style={styles.infoText}>
-              eQala — единая цифровая экосистема для обращений граждан и управления городскими проблемами.
-            </Text>
-            <Text style={styles.infoText}>
-              Авторизация через Digital ID (eGov) делает обращения подтвержденными, прозрачными и юридически значимыми.
+              Вход через Digital ID подтверждает личность и делает обращения официальными.
             </Text>
           </SectionCard>
 
-          <SectionCard title="Как это работает">
+          <SectionCard title="Как это работает: 3 шага">
             <View style={styles.modules}>
-              <ModuleCard icon="👤" title="Житель" description="Подает заявку с фото и геолокацией" />
-              <ModuleCard icon="🛠️" title="Исполнитель" description="Выполняет задачу и прикладывает фото До/После" />
-              <ModuleCard icon="🏛" title="Акимат" description="Контролирует SLA, назначает и анализирует" />
+              <ModuleCard icon="1️⃣" title="Создайте заявку" description="Опишите проблему, добавьте фото и геолокацию" />
+              <ModuleCard icon="2️⃣" title="Следите за статусом" description="Видите исполнителя, сроки и обновления по задаче" />
+              <ModuleCard icon="3️⃣" title="Подтвердите результат" description="Проверьте фото До/После и закройте обращение" />
             </View>
           </SectionCard>
 
-          <SectionCard title="Что можно решить через eQala?">
+          <SectionCard title="Популярные категории">
             <Tag text="ЖКХ: вода, свет, дороги, мусор" />
-            <Tag text="Городская среда: транспорт, благоустройство, безопасность" />
-            <Tag text="Госуслуги: обращения, запись, запросы информации" />
-            <Tag text="Льготы и соцвопросы" />
-            <Tag text="Земля, бизнес и налоги" />
+            <Tag text="Благоустройство и безопасность" />
+            <Tag text="Транспорт и городская среда" />
+            <Tag text="Госуслуги и соцвопросы" />
           </SectionCard>
 
           <SectionCard title="Почему это удобно" tone="primary">
-            <ListItem text="Цифровой трек-номер и прозрачный статус заявки" />
-            <ListItem text="Фото-подтверждение работ и контроль сроков (SLA)" />
-            <ListItem text="Карта проблем и аналитика в реальном времени" />
-            <ListItem text="Рейтинг подрядчиков и геймификация для жителей" />
+            <ListItem text="Понятный трек-номер и прозрачный статус заявки" />
+            <ListItem text="Фото-подтверждение работ и контроль сроков" />
+            <ListItem text="Меньше звонков и бумажных обращений" />
+            <ListItem text="Единое окно для жителя, исполнителя и акимата" />
           </SectionCard>
 
           <View style={styles.spacer} />
-        </ScrollView>
+        </Animated.ScrollView>
 
         <View style={styles.footer}>
           <Text style={styles.termsText}>MVP прототип для кейса «Городские сервисы и eGov»</Text>
@@ -114,51 +152,86 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   header: {
-    gap: 10,
-    paddingHorizontal: 2,
-    paddingTop: 4,
-    paddingBottom: 6,
-  },
-  topActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 8,
-  },
-  topLink: {
+    height: "20%",
+    justifyContent: "space-between",
+    gap: 4,
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: ui.radius.lg,
     borderWidth: 1,
     borderColor: ui.colors.border,
     backgroundColor: ui.colors.surface,
   },
-  topLinkPrimary: {
-    borderColor: "#cbe6d6",
-    backgroundColor: ui.colors.primarySoft,
+  headerTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  topLinkText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: ui.colors.primary,
+  brandBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: ui.radius.pill,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
   },
-  topLinkPrimaryText: {
-    fontSize: 14,
+  brandBadgeText: {
+    fontSize: 11,
     fontWeight: "900",
     color: ui.colors.primary,
   },
   logo: {
-    fontSize: 36,
+    fontSize: 18,
   },
   title: {
-    fontSize: 38,
-    lineHeight: 44,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: "900",
     color: ui.colors.text,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 12,
     color: ui.colors.textMuted,
-    lineHeight: 24,
+    lineHeight: 16,
+  },
+  heroActions: {
+    gap: 6,
+    marginTop: 6,
+    marginBottom: 6,
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  heroPrimaryBtn: {
+    minHeight: 40,
+    width: "92%",
+    borderRadius: ui.radius.md,
+    backgroundColor: ui.colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  heroPrimaryBtnText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: ui.colors.surface,
+  },
+  heroSecondaryBtn: {
+    minHeight: 38,
+    width: "92%",
+    borderRadius: ui.radius.md,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  heroSecondaryBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: ui.colors.primary,
   },
   scrollContent: {
     paddingVertical: 8,
@@ -178,7 +251,7 @@ const styles = StyleSheet.create({
   },
   infoBoxPrimary: {
     backgroundColor: ui.colors.primarySoft,
-    borderColor: "#cbe6d6",
+    borderColor: ui.colors.border,
   },
   infoTitle: {
     fontSize: 16,

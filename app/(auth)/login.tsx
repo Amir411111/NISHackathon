@@ -1,7 +1,7 @@
 import * as DocumentPicker from "expo-document-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Animated, Easing, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
 import { Field } from "@/components/Form";
@@ -30,11 +30,30 @@ export default function LoginScreen() {
   const [errorText, setErrorText] = useState("");
   const [hintText, setHintText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const methodSwitchAnim = useRef(new Animated.Value(1)).current;
+  const [segmentWidth, setSegmentWidth] = useState(0);
 
   useEffect(() => {
     if (modeParam === "register") setMode("register");
     if (modeParam === "login") setMode("login");
   }, [modeParam]);
+
+  useEffect(() => {
+    if (mode !== "login") return;
+    Animated.timing(methodSwitchAnim, {
+      toValue: loginMethod === "email" ? 1 : 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [loginMethod, mode, methodSwitchAnim]);
+
+  const segmentInnerWidth = Math.max(0, segmentWidth - 4);
+  const segmentThumbWidth = segmentInnerWidth / 2;
+  const segmentThumbShift = segmentThumbWidth;
+  const hasSelectedDigitalFile = !!selectedFile || !!selectedNativeFile;
 
   const isStrongPassword = useMemo(() => {
     return password.length >= 6 && /[A-Za-z]/.test(password) && /\d/.test(password);
@@ -47,12 +66,6 @@ export default function LoginScreen() {
     }
     return fullName.trim().length >= 3 && email.trim().includes("@") && isStrongPassword && password === confirmPassword;
   }, [mode, loginMethod, fullName, identifier, email, password, confirmPassword, selectedFile, selectedNativeFile, isStrongPassword]);
-
-  const roleTitle = useMemo(() => {
-    if (role === "CITIZEN") return "Житель";
-    if (role === "WORKER") return "Полевой сотрудник";
-    return "Диспетчер / Акимат";
-  }, [role]);
 
   async function proceed() {
     if (!canProceed) return;
@@ -123,33 +136,48 @@ export default function LoginScreen() {
 
   return (
     <Screen>
-      <Text style={styles.h1}>Digital ID (eGov) · Auth</Text>
-      <Text style={styles.p}>Вход через Email + пароль или через Digital ID файл + тот же пароль.</Text>
-
-      <View style={styles.modeRow}>
-        <ModeChip title="Вход" active={mode === "login"} onPress={() => setMode("login")} />
-        <ModeChip title="Регистрация" active={mode === "register"} onPress={() => setMode("register")} />
+      <View style={styles.topBar}>
+        <Pressable onPress={() => router.replace("/welcome")} hitSlop={8}>
+          <Text style={styles.closeText}>×</Text>
+        </Pressable>
+        <Pressable onPress={() => setMode(mode === "login" ? "register" : "login")} hitSlop={8}>
+          <Text style={styles.switchText}>{mode === "login" ? "Sign up" : "Login"}</Text>
+        </Pressable>
       </View>
 
-      {mode === "register" ? (
-        <Field label="Роль">
-          <View style={styles.roleRow}>
-            <RoleChip title="Citizen" subtitle="Житель" active={role === "CITIZEN"} onPress={() => setRole("CITIZEN")} />
-            <RoleChip title="Worker" subtitle="Исполнитель" active={role === "WORKER"} onPress={() => setRole("WORKER")} />
-            <RoleChip title="Admin" subtitle="Диспетчер" active={role === "ADMIN"} onPress={() => setRole("ADMIN")} />
-          </View>
-        </Field>
+      <Text style={styles.h1}>{mode === "login" ? "Log In" : "Sign Up"}</Text>
+
+      {mode === "login" ? (
+        <View
+          style={styles.segmentWrap}
+          onLayout={(event) => {
+            setSegmentWidth(event.nativeEvent.layout.width);
+          }}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.segmentThumb,
+              {
+                width: segmentThumbWidth,
+                transform: [
+                  {
+                    translateX: methodSwitchAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, segmentThumbShift],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
+          <ModeChip title="Digital ID" active={loginMethod === "digital-file"} onPress={() => setLoginMethod("digital-file")} />
+          <ModeChip title="Email" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
+        </View>
       ) : null}
 
       {mode === "login" ? (
-        <>
-          <Field label="Способ входа">
-            <View style={styles.modeRow}>
-              <ModeChip title="Email" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
-              <ModeChip title="Digital ID файл" active={loginMethod === "digital-file"} onPress={() => setLoginMethod("digital-file")} />
-            </View>
-          </Field>
-
+        <View style={styles.methodWrap}>
           {loginMethod === "email" ? (
             <Field label="Email">
               <TextInput
@@ -157,14 +185,14 @@ export default function LoginScreen() {
                 onChangeText={setIdentifier}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder="user@mail.com"
+                placeholder="Email"
                 style={styles.input}
               />
             </Field>
           ) : (
             <Field label="Файл Digital ID">
               <Pressable
-                style={styles.pickFileBtn}
+                style={[styles.pickFileBtn, !hasSelectedDigitalFile && styles.pickFileBtnPlaceholderBorder]}
                 onPress={async () => {
                   setErrorText("");
                   if (Platform.OS === "web") {
@@ -194,21 +222,21 @@ export default function LoginScreen() {
                   setSelectedFile(null);
                 }}
               >
-                <Text style={styles.pickFileBtnText}>
+                <Text style={[styles.pickFileBtnText, !hasSelectedDigitalFile && styles.pickFileBtnPlaceholderText]}>
                   {selectedFile
-                    ? `Выбран: ${selectedFile.name}`
+                    ? selectedFile.name
                     : selectedNativeFile
-                      ? `Выбран: ${selectedNativeFile.name || "digital-id.eqid"}`
-                      : "Выбрать файл"}
+                      ? selectedNativeFile.name || "digital-id.eqid"
+                      : "upload file"}
                 </Text>
               </Pressable>
             </Field>
           )}
-        </>
+        </View>
       ) : (
         <>
           <Field label="ФИО">
-            <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Иванов Иван Иванович" style={styles.input} />
+            <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Name" style={styles.input} />
           </Field>
           <Field label="Email">
             <TextInput
@@ -216,38 +244,49 @@ export default function LoginScreen() {
               onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="user@mail.com"
+              placeholder="Email"
               style={styles.input}
             />
           </Field>
+          {loginMethod === "digital-file" ? <Text style={styles.hintText}>Digital ID файл будет выдан после регистрации.</Text> : null}
         </>
       )}
 
-      <Field label="Пароль">
-        <TextInput
-          value={password}
-          onChangeText={(v) => {
-            setPassword(v);
-            setErrorText("");
-          }}
-          secureTextEntry
-          placeholder={mode === "register" ? "Минимум 6 символов, буквы и цифры" : "Введите пароль"}
-          style={styles.input}
-        />
+      <Field label="Password">
+        <View style={styles.inputRow}>
+          <TextInput
+            value={password}
+            onChangeText={(v) => {
+              setPassword(v);
+              setErrorText("");
+            }}
+            secureTextEntry={!passwordVisible}
+            placeholder="Password"
+            style={[styles.input, styles.inputGrow]}
+          />
+          <Pressable onPress={() => setPasswordVisible((v) => !v)} style={styles.showBtn}>
+            <Text style={styles.showBtnText}>Show</Text>
+          </Pressable>
+        </View>
       </Field>
 
       {mode === "register" ? (
-        <Field label="Повторите пароль">
-          <TextInput
-            value={confirmPassword}
-            onChangeText={(v) => {
-              setConfirmPassword(v);
-              setErrorText("");
-            }}
-            secureTextEntry
-            placeholder="Повторите пароль"
-            style={styles.input}
-          />
+        <Field label="Confirm password">
+          <View style={styles.inputRow}>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={(v) => {
+                setConfirmPassword(v);
+                setErrorText("");
+              }}
+              secureTextEntry={!confirmVisible}
+              placeholder="Confirm password"
+              style={[styles.input, styles.inputGrow]}
+            />
+            <Pressable onPress={() => setConfirmVisible((v) => !v)} style={styles.showBtn}>
+              <Text style={styles.showBtnText}>Show</Text>
+            </Pressable>
+          </View>
         </Field>
       ) : null}
 
@@ -261,24 +300,22 @@ export default function LoginScreen() {
         <Text style={styles.validationText}>Пароли не совпадают.</Text>
       ) : null}
 
-      <View style={styles.summary}>
-        <Text style={styles.summaryTitle}>Статус:</Text>
-        <Text style={styles.summaryValue}>{mode === "register" ? `Регистрация: ${roleTitle}` : "Вход"}</Text>
-        {issuedFile ? (
+      {issuedFile ? (
+        <View style={styles.summary}>
           <Pressable
             onPress={async () => {
               const ok = await downloadDigitalIdFile(issuedFile);
               if (!ok) Alert.alert("Готово", `Файл создан: ${issuedFile.filename}`);
             }}
           >
-            <Text style={styles.key}>Digital ID файл выпущен: {issuedFile.filename}</Text>
-            <Text style={styles.keyHint}>Нажмите, чтобы скачать файл</Text>
+            <Text style={styles.key}>Digital ID файл: {issuedFile.filename}</Text>
+            <Text style={styles.keyHint}>Нажмите, чтобы скачать</Text>
           </Pressable>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
 
       <Button onPress={proceed} disabled={!canProceed} loading={busy}>
-        {mode === "login" ? "Войти" : "Зарегистрироваться"}
+        {mode === "login" ? "Log In" : "Sign Up"}
       </Button>
 
       {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
@@ -289,80 +326,77 @@ export default function LoginScreen() {
 
 function ModeChip(props: { title: string; active: boolean; onPress: () => void }) {
   return (
-    <Pressable onPress={props.onPress} style={[styles.modeChip, props.active && styles.modeChipActive]}>
+    <Pressable onPress={props.onPress} style={styles.modeChip}>
       <Text style={[styles.modeText, props.active && styles.modeTextActive]}>{props.title}</Text>
     </Pressable>
   );
 }
 
-function RoleChip(props: { title: string; subtitle: string; active: boolean; onPress: () => void }) {
-  return (
-    <Pressable onPress={props.onPress} style={[styles.roleChip, props.active && styles.roleChipActive]}>
-      <Text style={[styles.roleTitle, props.active && styles.roleTitleActive]}>{props.title}</Text>
-      <Text style={[styles.roleSub, props.active && styles.roleSubActive]}>{props.subtitle}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  h1: { fontSize: 28, fontWeight: "900", color: ui.colors.text },
-  p: { fontSize: 14, color: ui.colors.textMuted, lineHeight: 20 },
+  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  closeText: { fontSize: 22, color: "#b8b8b8", lineHeight: 22 },
+  switchText: { fontSize: 14, color: ui.colors.primary, fontWeight: "700" },
 
-  modeRow: { flexDirection: "row", gap: 10 },
+  h1: { marginTop: 2, fontSize: 22, fontWeight: "900", color: ui.colors.text, textAlign: "center" },
+  p: { fontSize: 14, color: ui.colors.textMuted, lineHeight: 20, textAlign: "center" },
+
+  segmentWrap: {
+    flexDirection: "row",
+    position: "relative",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    borderRadius: 999,
+    padding: 2,
+    backgroundColor: ui.colors.surfaceMuted,
+  },
+  segmentThumb: {
+    position: "absolute",
+    left: 2,
+    top: 2,
+    bottom: 2,
+    borderRadius: 999,
+    backgroundColor: ui.colors.surface,
+  },
   modeChip: {
     flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: ui.colors.border,
+    borderRadius: 999,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: ui.colors.surfaceMuted,
+    backgroundColor: "transparent",
   },
-  modeChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
-  modeText: { fontSize: 13, fontWeight: "900", color: ui.colors.textMuted },
+  modeText: { fontSize: 14, fontWeight: "700", color: "#c0c0c0" },
   modeTextActive: { color: ui.colors.primary },
 
-  roleRow: { flexDirection: "row", gap: 10 },
-  roleChip: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: ui.colors.border,
-    paddingVertical: 12,
-    alignItems: "center",
-    gap: 2,
-    backgroundColor: ui.colors.surfaceMuted,
-  },
-  roleChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
-  roleTitle: { fontSize: 14, fontWeight: "900", color: ui.colors.textMuted },
-  roleTitleActive: { color: ui.colors.primary },
-  roleSub: { fontSize: 12, fontWeight: "700", color: ui.colors.textMuted },
-  roleSubActive: { color: ui.colors.primary },
+  methodWrap: { gap: 12 },
 
   input: {
-    borderWidth: 1,
-    borderColor: ui.colors.border,
     backgroundColor: ui.colors.surfaceMuted,
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 16,
+    color: ui.colors.text,
   },
+  inputGrow: { flex: 1 },
+  inputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  showBtn: { paddingHorizontal: 8, paddingVertical: 6 },
+  showBtnText: { color: ui.colors.primary, fontSize: 13, fontWeight: "700" },
 
   summary: { padding: 12, borderRadius: 14, backgroundColor: ui.colors.surfaceMuted, borderWidth: 1, borderColor: ui.colors.border },
-  summaryTitle: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "800" },
-  summaryValue: { marginTop: 4, fontSize: 16, fontWeight: "900", color: ui.colors.text },
   key: { marginTop: 8, fontSize: 12, fontWeight: "900", color: ui.colors.text },
   keyHint: { marginTop: 2, fontSize: 11, fontWeight: "700", color: ui.colors.textMuted },
   pickFileBtn: {
-    borderWidth: 1,
-    borderColor: ui.colors.border,
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
     backgroundColor: ui.colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
   },
-  pickFileBtnText: { fontSize: 14, fontWeight: "800", color: ui.colors.primary },
+  pickFileBtnPlaceholderBorder: { borderColor: ui.colors.primary },
+  pickFileBtnText: { fontSize: 16, fontWeight: "700", color: ui.colors.text },
+  pickFileBtnPlaceholderText: { color: ui.colors.primary, fontWeight: "800" },
   validationText: { marginTop: -6, fontSize: 12, fontWeight: "700", color: ui.colors.warning },
   errorText: { marginTop: 8, fontSize: 13, fontWeight: "800", color: ui.colors.danger },
   hintText: { marginTop: 8, fontSize: 13, fontWeight: "700", color: ui.colors.primary },
