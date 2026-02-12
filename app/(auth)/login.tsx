@@ -235,6 +235,15 @@ export default function LoginScreen() {
         </View>
       ) : (
         <>
+          <View style={styles.roleSection}>
+            <Text style={styles.roleSectionLabel}>Выберите роль (обязательно)</Text>
+            <View style={styles.roleRow}>
+              <RoleChip title="Житель" active={role === "CITIZEN"} onPress={() => setRole("CITIZEN")} />
+              <RoleChip title="Диспетчер" active={role === "ADMIN"} onPress={() => setRole("ADMIN")} />
+              <RoleChip title="Специалист" active={role === "WORKER"} onPress={() => setRole("WORKER")} />
+            </View>
+          </View>
+
           <Field label="ФИО">
             <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Name" style={styles.input} />
           </Field>
@@ -332,6 +341,14 @@ function ModeChip(props: { title: string; active: boolean; onPress: () => void }
   );
 }
 
+function RoleChip(props: { title: string; active: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={props.onPress} style={[styles.roleChip, props.active && styles.roleChipActive]}>
+      <Text style={[styles.roleChipText, props.active && styles.roleChipTextActive]}>{props.title}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   closeText: { fontSize: 22, color: "#b8b8b8", lineHeight: 22 },
@@ -369,6 +386,44 @@ const styles = StyleSheet.create({
   modeTextActive: { color: ui.colors.primary },
 
   methodWrap: { gap: 12 },
+
+  roleSection: {
+    gap: 8,
+    padding: 10,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    borderRadius: 12,
+    backgroundColor: ui.colors.surface,
+  },
+  roleSectionLabel: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: ui.colors.primary,
+  },
+  roleRow: { flexDirection: "row", gap: 8 },
+  roleChip: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  roleChipActive: {
+    borderColor: ui.colors.primary,
+    backgroundColor: ui.colors.primarySoft,
+  },
+  roleChipText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: ui.colors.textMuted,
+  },
+  roleChipTextActive: {
+    color: ui.colors.primary,
+    fontWeight: "800",
+  },
 
   input: {
     backgroundColor: ui.colors.surfaceMuted,
