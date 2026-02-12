@@ -38,7 +38,7 @@ export function LocationPicker(props: {
       <Text style={styles.label}>Геолокация</Text>
       <Text style={styles.value}>{label}</Text>
       <Button onPress={detect} loading={busy} variant="secondary">
-        Определить (mock)
+          Определить
       </Button>
     </View>
   );

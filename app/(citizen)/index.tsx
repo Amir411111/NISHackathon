@@ -1,7 +1,8 @@
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { Button } from "@/components/Buttons";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { ACTIVE_CITIZEN_BADGE_THRESHOLD } from "@/constants/sla";
@@ -46,11 +47,7 @@ export default function CitizenRequestsScreen() {
           </Text>
         </View>
 
-        <Link href="/(citizen)/new" asChild>
-          <Pressable style={({ pressed }) => [styles.cta, pressed && { opacity: 0.85 }]}>
-            <Text style={styles.ctaText}>Подать заявку</Text>
-          </Pressable>
-        </Link>
+        <Button onPress={() => router.push("/(citizen)/new")}>Создать заявку</Button>
       </View>
 
       <ScrollView contentContainerStyle={styles.list}>
@@ -101,8 +98,6 @@ const styles = StyleSheet.create({
   points: { fontSize: 16, fontWeight: "900", color: "#111" },
   badge: { fontSize: 12, fontWeight: "800", color: "#666" },
   badgeActive: { color: "#111" },
-  cta: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: "#111", alignItems: "center" },
-  ctaText: { color: "#fff", fontWeight: "900" },
   list: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
   sectionHead: {
     marginTop: 8,
