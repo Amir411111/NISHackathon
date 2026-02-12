@@ -54,10 +54,30 @@ export default function CitizenRequestsScreen() {
   );
 
   const visibleRequests = selectedTab === "ACTIVE" ? activeRequests : selectedTab === "PENDING_CONFIRM" ? pendingConfirmationRequests : closedRequests;
+  const overdueMine = activeRequests.filter((r) => isOverdue(r, now));
+  const nearDeadlineMine = activeRequests.filter((r) => {
+    if (!r.slaDeadline) return false;
+    const remain = r.slaDeadline - now;
+    return remain > 0 && remain <= 60 * 60 * 1000;
+  });
 
   return (
     <Screen scroll={false}>
       <View style={styles.top}>
+        {overdueMine.length > 0 ? (
+          <View style={[styles.slaBanner, styles.slaDanger]}>
+            <Text style={styles.slaTitle}>SLA уведомление</Text>
+            <Text style={styles.slaText}>Есть просроченные заявки: {overdueMine.length}. Диспетчер уже уведомлён.</Text>
+          </View>
+        ) : null}
+
+        {overdueMine.length === 0 && nearDeadlineMine.length > 0 ? (
+          <View style={[styles.slaBanner, styles.slaWarn]}>
+            <Text style={styles.slaTitle}>SLA уведомление</Text>
+            <Text style={styles.slaText}>По {nearDeadlineMine.length} заявкам дедлайн скоро истечёт.</Text>
+          </View>
+        ) : null}
+
         <View style={styles.gamification}>
           <Text style={styles.points}>Баллы: {points}</Text>
           <Text style={[styles.badge, hasBadge && styles.badgeActive]}>
@@ -107,6 +127,11 @@ function SectionTitle(props: { text: string; count: number }) {
 
 const styles = StyleSheet.create({
   top: { padding: 16, gap: 12 },
+  slaBanner: { borderRadius: 12, borderWidth: 1, padding: 10, gap: 2 },
+  slaDanger: { borderColor: ui.colors.danger, backgroundColor: ui.colors.dangerSoft },
+  slaWarn: { borderColor: ui.colors.warning, backgroundColor: "#fff7ea" },
+  slaTitle: { fontSize: 12, fontWeight: "900", color: ui.colors.text },
+  slaText: { fontSize: 12, fontWeight: "700", color: ui.colors.text },
   gamification: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surfaceMuted, gap: 6 },
   points: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
   badge: { fontSize: 12, fontWeight: "800", color: ui.colors.textMuted },

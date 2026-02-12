@@ -19,7 +19,7 @@ type RequestDto = {
   workerId: string | null;
   createdAt: string;
   updatedAt: string;
-  slaDeadline: string;
+  slaDeadline?: string | null;
   isOverdue: boolean;
   workStartedAt?: string | null;
   workEndedAt?: string | null;
@@ -74,6 +74,7 @@ function mapDto(dto: RequestDto): Request {
     statusHistory: (dto.statusHistory || []).map((h) => ({ status: h.status, at: new Date(h.at).getTime(), by: roleFromBackend(h.by) })),
     createdAt: new Date(dto.createdAt).getTime(),
     updatedAt: new Date(dto.updatedAt).getTime(),
+    slaDeadline: dto.slaDeadline ? new Date(dto.slaDeadline).getTime() : undefined,
     assignedWorkerId: dto.workerId ?? undefined,
     priority: priorityFromBackend(dto.priority),
     reworkCount: dto.reworkCount ?? 0,
@@ -183,8 +184,8 @@ export async function adminListAll(): Promise<Request[]> {
   return res.data.items.map(mapDto);
 }
 
-export async function adminAssign(requestId: string, workerId: string): Promise<Request> {
-  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${requestId}/assign`, { workerId });
+export async function adminAssign(requestId: string, workerId: string, deadlineHours: number): Promise<Request> {
+  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${requestId}/assign`, { workerId, deadlineHours });
   return mapDto(res.data.item);
 }
 

@@ -29,6 +29,11 @@ export default function WorkerWorklistScreen() {
   const medium = tasks.filter((r) => r.priority === "MEDIUM").length;
   const low = tasks.filter((r) => r.priority === "LOW").length;
   const overdue = tasks.filter((r) => isOverdue(r, now)).length;
+  const dueSoon = tasks.filter((r) => {
+    if (!r.slaDeadline) return false;
+    const remain = r.slaDeadline - now;
+    return remain > 0 && remain <= 60 * 60 * 1000;
+  }).length;
 
   const me = workers.find((w) => w.id === user?.id) ?? (workers.length === 1 ? workers[0] : undefined);
   const profileRating = typeof user?.ratingAvg === "number" ? user.ratingAvg : undefined;
@@ -98,6 +103,18 @@ export default function WorkerWorklistScreen() {
                 </View>
               </View>
               <Text style={styles.p}>Приоритет, адрес/координаты и текущий статус.</Text>
+
+              {overdue > 0 ? (
+                <View style={[styles.notice, styles.noticeDanger]}>
+                  <Text style={styles.noticeText}>SLA alert: у вас {overdue} просроченных задач.</Text>
+                </View>
+              ) : null}
+
+              {overdue === 0 && dueSoon > 0 ? (
+                <View style={[styles.notice, styles.noticeWarn]}>
+                  <Text style={styles.noticeText}>Напоминание: {dueSoon} задач истекают в течение часа.</Text>
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.card}>
@@ -178,6 +195,10 @@ const styles = StyleSheet.create({
   },
   ratingText: { fontSize: 12, fontWeight: "900", color: ui.colors.primary },
   p: { fontSize: 13, color: ui.colors.textMuted },
+  notice: { marginTop: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 8 },
+  noticeDanger: { borderColor: ui.colors.danger, backgroundColor: ui.colors.dangerSoft },
+  noticeWarn: { borderColor: ui.colors.warning, backgroundColor: "#fff7ea" },
+  noticeText: { fontSize: 12, fontWeight: "900", color: ui.colors.text },
   card: { borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surface, padding: 12, gap: 10 },
   cardTitle: { fontSize: 14, fontWeight: "900", color: ui.colors.text },
   metricsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

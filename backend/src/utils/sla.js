@@ -12,8 +12,9 @@ function computeSlaDeadline(priority, now = new Date()) {
 
 function computeIsOverdue(requestDoc, now = new Date()) {
   if (!requestDoc) return false;
-  if (requestDoc.status !== "IN_PROGRESS") return false;
-  return requestDoc.slaDeadline && requestDoc.slaDeadline.getTime() < now.getTime();
+  if (!requestDoc.slaDeadline) return false;
+  if (requestDoc.status === "DONE" || requestDoc.status === "REJECTED") return false;
+  return requestDoc.slaDeadline.getTime() < now.getTime();
 }
 
 module.exports = { getSlaMinutesForPriority, computeSlaDeadline, computeIsOverdue };

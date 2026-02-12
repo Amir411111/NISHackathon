@@ -54,6 +54,7 @@ export type Request = {
 
   createdAt: number;
   updatedAt: number;
+  slaDeadline?: number;
 
   assignedWorkerId?: string;
   priority: RequestPriority;
