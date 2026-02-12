@@ -83,20 +83,12 @@ export default function CitizenRequestDetailsScreen() {
     <Screen>
       <RequestCard request={request} worker={worker} overdue={overdue} />
 
-      <Section title="Фото">
-        {request.photoUri ? (
-          request.photoUri.startsWith("mock://") ? (
-            <View style={[styles.photo, styles.mockPhoto]}>
-              <Text style={styles.mockText}>MOCK PHOTO</Text>
-            </View>
-          ) : (
-            <Image source={{ uri: request.photoUri }} style={styles.photo} contentFit="cover" />
-          )
-        ) : (
-          <View style={styles.photoEmpty}>
-            <Text style={styles.photoEmptyText}>Фото не прикреплено</Text>
-          </View>
-        )}
+      <Section title="Фото до">
+        <ReadonlyPhoto uri={request.beforePhotoUri || request.photoUri} emptyText="Фото до не прикреплено" />
+      </Section>
+
+      <Section title="Фото после">
+        <ReadonlyPhoto uri={request.afterPhotoUri} emptyText="Исполнитель еще не загрузил фото после" />
       </Section>
 
       <Section title="Таймлайн статусов">
@@ -145,6 +137,26 @@ function Section(props: { title: string; children: ReactNode }) {
       {props.children}
     </View>
   );
+}
+
+function ReadonlyPhoto(props: { uri?: string; emptyText: string }) {
+  if (!props.uri) {
+    return (
+      <View style={styles.photoEmpty}>
+        <Text style={styles.photoEmptyText}>{props.emptyText}</Text>
+      </View>
+    );
+  }
+
+  if (props.uri.startsWith("mock://")) {
+    return (
+      <View style={[styles.photo, styles.mockPhoto]}>
+        <Text style={styles.mockText}>MOCK PHOTO</Text>
+      </View>
+    );
+  }
+
+  return <Image source={{ uri: props.uri }} style={styles.photo} contentFit="cover" />;
 }
 
 const styles = StyleSheet.create({
