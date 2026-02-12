@@ -1,4 +1,3 @@
-const path = require("path");
 const express = require("express");
 const cors = require("cors");
 
@@ -10,7 +9,7 @@ const { buildRequestRoutes } = require("./routes/requestRoutes");
 const { buildTaskRoutes } = require("./routes/taskRoutes");
 const { buildAnalyticsRoutes } = require("./routes/analyticsRoutes");
 const { buildWorkerRoutes } = require("./routes/workerRoutes");
-const { ensureUploadDir } = require("./utils/upload");
+const { streamUploadFromMongo } = require("./utils/upload");
 const { ensureSystemCategories } = require("./controllers/requestController");
 const { me } = require("./controllers/authController");
 
@@ -26,8 +25,7 @@ function createApp(env) {
 
   app.use(express.json({ limit: "2mb" }));
 
-  ensureUploadDir();
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  app.get("/uploads/:id", (req, res) => streamUploadFromMongo(req.params.id, res));
 
   app.get("/", (_req, res) =>
     res.json({

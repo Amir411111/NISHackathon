@@ -2,7 +2,7 @@ const Category = require("../models/Category");
 const Request = require("../models/Request");
 const User = require("../models/User");
 const { computeIsOverdue, computeSlaDeadline } = require("../utils/sla");
-const { fileUrlFromFilename } = require("../utils/upload");
+const { saveUploadedFilesToMongo } = require("../utils/upload");
 
 async function ensureSystemCategories() {
   const names = ["Свет", "Мусор", "Дорога"];
@@ -64,11 +64,8 @@ async function createCitizenRequest(env, req, res) {
   const lngNum = Number(lng);
   if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) return res.status(400).json({ error: "lat/lng are required" });
 
-  let beforeUrls = [];
   const beforeFiles = req.files?.before;
-  if (beforeFiles && Array.isArray(beforeFiles)) {
-    beforeUrls = beforeFiles.map((f) => fileUrlFromFilename(f.filename, req));
-  }
+  const beforeUrls = await saveUploadedFilesToMongo(beforeFiles, req);
 
   const categoryId = await resolveCategoryId(category);
 

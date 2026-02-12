@@ -1,6 +1,6 @@
 const Request = require("../models/Request");
 const { computeIsOverdue } = require("../utils/sla");
-const { fileUrlFromFilename } = require("../utils/upload");
+const { saveUploadedFilesToMongo } = require("../utils/upload");
 
 function map(doc) {
   const cat = doc.categoryId && typeof doc.categoryId === "object" ? doc.categoryId : null;
@@ -70,7 +70,7 @@ async function completeTask(_env, req, res) {
   if (!doc.workerId || doc.workerId.toString() !== req.user.id) return res.status(403).json({ error: "Forbidden" });
 
   const afterFiles = req.files?.after;
-  const afterUrls = Array.isArray(afterFiles) ? afterFiles.map((f) => fileUrlFromFilename(f.filename, req)) : [];
+  const afterUrls = await saveUploadedFilesToMongo(afterFiles, req);
   if (afterUrls.length === 0) return res.status(400).json({ error: "photosAfter is required" });
 
   doc.photosAfter = [...doc.photosAfter, ...afterUrls];
