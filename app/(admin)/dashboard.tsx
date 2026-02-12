@@ -4,7 +4,6 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { HotspotsMap } from "@/components/HotspotsMap";
 import { Screen } from "@/components/Screen";
-import { ui } from "@/constants/ui";
 import { analyticsSummary } from "@/services/requestService";
 import { getWorkers } from "@/services/workerService";
 import { useAppStore } from "@/store/useAppStore";
@@ -101,14 +100,14 @@ function Metric(props: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 14, borderRadius: 16, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surface, gap: 12 },
-  title: { fontSize: 14, fontWeight: "900", color: ui.colors.text },
+  card: { padding: 14, borderRadius: 16, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fff", gap: 12 },
+  title: { fontSize: 14, fontWeight: "900", color: "#111" },
   body: { gap: 10 },
   metric: { flexDirection: "row", justifyContent: "space-between", gap: 10 },
-  label: { fontSize: 13, color: ui.colors.textMuted, fontWeight: "700" },
-  metricValue: { fontSize: 14, color: ui.colors.text, fontWeight: "900" },
+  label: { fontSize: 13, color: "#666", fontWeight: "700" },
+  metricValue: { fontSize: 14, color: "#111", fontWeight: "900" },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  contractor: { fontSize: 13, fontWeight: "800", color: ui.colors.text },
-  value: { fontSize: 13, fontWeight: "900", color: ui.colors.primary },
-  empty: { color: ui.colors.textMuted, fontWeight: "700" },
+  contractor: { fontSize: 13, fontWeight: "800", color: "#111" },
+  value: { fontSize: 13, fontWeight: "900", color: "#111" },
+  empty: { color: "#666", fontWeight: "700" },
 });

@@ -8,7 +8,6 @@ import { Button } from "@/components/Buttons";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
 import { StatusTimeline } from "@/components/Status";
-import { ui } from "@/constants/ui";
 import { useNow } from "@/hooks/useNow";
 import { citizenConfirm, citizenReject } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
@@ -141,25 +140,25 @@ function Section(props: { title: string; children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: 18, fontWeight: "900", color: ui.colors.text },
+  h1: { fontSize: 18, fontWeight: "900" },
   section: { gap: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: "900", color: ui.colors.text },
+  sectionTitle: { fontSize: 14, fontWeight: "900", color: "#111" },
   photo: { height: 180, borderRadius: 14, overflow: "hidden" },
   photoEmpty: {
     height: 180,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: ui.colors.border,
-    backgroundColor: ui.colors.surfaceMuted,
+    borderColor: "#eee",
+    backgroundColor: "#fafafa",
     alignItems: "center",
     justifyContent: "center",
   },
-  photoEmptyText: { fontWeight: "800", color: ui.colors.textMuted },
-  mockPhoto: { backgroundColor: ui.colors.surfaceMuted, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ui.colors.border },
-  mockText: { fontWeight: "900", color: ui.colors.textMuted },
-  rateLabel: { fontSize: 13, fontWeight: "800", color: ui.colors.text },
+  photoEmptyText: { fontWeight: "800", color: "#666" },
+  mockPhoto: { backgroundColor: "#fafafa", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#eee" },
+  mockText: { fontWeight: "900", color: "#666" },
+  rateLabel: { fontSize: 13, fontWeight: "800", color: "#333" },
   rateRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  confirmed: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.primarySoft },
-  confirmedText: { fontWeight: "900", color: ui.colors.primary },
-  confirmedRate: { marginTop: 6, fontWeight: "800", color: ui.colors.text },
+  confirmed: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: "#eee", backgroundColor: "#f7f7f7" },
+  confirmedText: { fontWeight: "900", color: "#111" },
+  confirmedRate: { marginTop: 6, fontWeight: "800", color: "#333" },
 });

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
-import { ui } from "@/constants/ui";
 
 export function PhotoPicker(props: {
   label: string;
@@ -204,22 +203,22 @@ function MockImage(props: { uri: string }) {
 
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
-  label: { fontSize: 13, color: ui.colors.textMuted, fontWeight: "600" },
+  label: { fontSize: 13, color: "#444", fontWeight: "600" },
   preview: {
     height: 160,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: ui.colors.border,
-    backgroundColor: ui.colors.surfaceMuted,
+    borderColor: "#eee",
+    backgroundColor: "#fafafa",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
   image: { width: "100%", height: "100%" },
-  placeholder: { color: ui.colors.textMuted, fontWeight: "700" },
+  placeholder: { color: "#777", fontWeight: "700" },
   actions: { flexDirection: "row", gap: 10, flexWrap: "wrap", alignItems: "center" },
   clear: { paddingHorizontal: 8, paddingVertical: 6 },
-  clearText: { color: ui.colors.danger, fontWeight: "800" },
+  clearText: { color: "#b00020", fontWeight: "800" },
   mock: { alignItems: "center", justifyContent: "center" },
-  mockText: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "900", textAlign: "center" },
+  mockText: { fontSize: 12, color: "#555", fontWeight: "900", textAlign: "center" },
 });

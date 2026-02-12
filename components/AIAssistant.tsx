@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
-import { ui } from "@/constants/ui";
 import { askAssistant } from "@/services/aiService";
 import type { Request, RequestLocation, Worker } from "@/types/domain";
 import { requestDisplayName } from "@/utils/requestPresentation";
@@ -356,47 +355,47 @@ function priorityLabel(priority: Request["priority"]) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.surface, padding: 12, gap: 10 },
+  card: { borderRadius: 14, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fff", padding: 12, gap: 10 },
   headRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  title: { fontSize: 14, fontWeight: "900", color: ui.colors.text },
+  title: { fontSize: 14, fontWeight: "900", color: "#111" },
   badge: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: ui.colors.border,
-    backgroundColor: ui.colors.primarySoft,
+    borderColor: "#eee",
+    backgroundColor: "#fafafa",
     paddingHorizontal: 8,
     paddingVertical: 2,
     fontSize: 11,
     fontWeight: "800",
-    color: ui.colors.primary,
+    color: "#555",
   },
-  subtitle: { fontSize: 12, color: ui.colors.textMuted, fontWeight: "700" },
-  hint: { fontSize: 12, color: ui.colors.textMuted },
+  subtitle: { fontSize: 12, color: "#666", fontWeight: "700" },
+  hint: { fontSize: 12, color: "#777" },
   chatWrap: { gap: 6 },
   msg: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 8 },
-  msgAi: { borderColor: ui.colors.border, backgroundColor: ui.colors.primarySoft },
-  msgUser: { borderColor: ui.colors.border, backgroundColor: ui.colors.surfaceMuted },
-  msgText: { fontSize: 12, color: ui.colors.text, fontWeight: "600" },
+  msgAi: { borderColor: "#eee", backgroundColor: "#fafafa" },
+  msgUser: { borderColor: "#e5e5e5", backgroundColor: "#fff" },
+  msgText: { fontSize: 12, color: "#222", fontWeight: "600" },
   actionsRow: { flexDirection: "row" },
   quickBtn: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: ui.colors.border,
-    backgroundColor: ui.colors.surfaceMuted,
+    borderColor: "#e5e5e5",
+    backgroundColor: "#fff",
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   quickBtnDisabled: { opacity: 0.6 },
-  quickBtnText: { fontSize: 12, fontWeight: "800", color: ui.colors.primary },
+  quickBtnText: { fontSize: 12, fontWeight: "800", color: "#333" },
   input: {
     minHeight: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: ui.colors.border,
+    borderColor: "#e5e5e5",
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: ui.colors.text,
-    backgroundColor: ui.colors.surfaceMuted,
+    color: "#111",
+    backgroundColor: "#fff",
   },
 });

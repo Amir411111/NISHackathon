@@ -1,5 +1,4 @@
 import { STATUS_STEPS } from "@/constants/domain";
-import { ui } from "@/constants/ui";
 import type { RequestStatus, StatusHistoryItem } from "@/types/domain";
 import { formatDateTime } from "@/utils/time";
 import { StyleSheet, Text, View } from "react-native";
@@ -48,12 +47,12 @@ function roleLabel(r: string) {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
   step: { flex: 1, alignItems: "center", gap: 6 },
-  dot: { width: 10, height: 10, borderRadius: 10, backgroundColor: "#d7dbe0" },
-  dotActive: { backgroundColor: ui.colors.primary },
-  stepLabel: { fontSize: 11, color: ui.colors.textMuted },
-  stepLabelActive: { color: ui.colors.primary, fontWeight: "700" },
+  dot: { width: 10, height: 10, borderRadius: 10, backgroundColor: "#d0d0d0" },
+  dotActive: { backgroundColor: "#111" },
+  stepLabel: { fontSize: 11, color: "#888" },
+  stepLabelActive: { color: "#111", fontWeight: "700" },
   timeline: { gap: 10 },
-  timelineItem: { padding: 12, borderRadius: 12, backgroundColor: ui.colors.surfaceMuted, borderWidth: 1, borderColor: ui.colors.border },
-  timelineStatus: { fontSize: 14, fontWeight: "800", color: ui.colors.text },
-  timelineMeta: { marginTop: 4, fontSize: 12, color: ui.colors.textMuted },
+  timelineItem: { padding: 12, borderRadius: 12, backgroundColor: "#fafafa", borderWidth: 1, borderColor: "#eee" },
+  timelineStatus: { fontSize: 14, fontWeight: "800", color: "#111" },
+  timelineMeta: { marginTop: 4, fontSize: 12, color: "#666" },
 });

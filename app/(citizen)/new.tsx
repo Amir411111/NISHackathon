@@ -9,7 +9,6 @@ import { Field, Input } from "@/components/Form";
 import { LocationPicker } from "@/components/LocationPicker";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { Screen } from "@/components/Screen";
-import { ui } from "@/constants/ui";
 import { createRequest as apiCreateRequest } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 import type { Category, RequestLocation, RequestPriority } from "@/types/domain";
@@ -119,21 +118,21 @@ function PriorityChip(props: { title: string; subtitle: string; active: boolean;
 }
 
 const styles = StyleSheet.create({
-  h1: { fontSize: 22, fontWeight: "900", color: ui.colors.text },
+  h1: { fontSize: 18, fontWeight: "900", color: "#111" },
   priorityRow: { flexDirection: "row", gap: 10 },
   priChip: {
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: ui.colors.border,
+    borderColor: "#e5e5e5",
     paddingVertical: 10,
     alignItems: "center",
     gap: 2,
-    backgroundColor: ui.colors.surfaceMuted,
+    backgroundColor: "#fff",
   },
-  priChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
-  priTitle: { fontSize: 13, fontWeight: "900", color: ui.colors.textMuted },
-  priTitleActive: { color: ui.colors.primary },
-  priSub: { fontSize: 11, fontWeight: "700", color: ui.colors.textMuted },
-  priSubActive: { color: ui.colors.primary },
+  priChipActive: { borderColor: "#111", backgroundColor: "#f7f7f7" },
+  priTitle: { fontSize: 13, fontWeight: "900", color: "#555" },
+  priTitleActive: { color: "#111" },
+  priSub: { fontSize: 11, fontWeight: "700", color: "#777" },
+  priSubActive: { color: "#111" },
 });

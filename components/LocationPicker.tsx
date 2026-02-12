@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
-import { ui } from "@/constants/ui";
 import type { RequestLocation } from "@/types/domain";
 
 const FALLBACK: RequestLocation = { lat: 43.238949, lon: 76.889709, accuracy: 999 };
@@ -47,6 +46,6 @@ export function LocationPicker(props: {
 
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
-  label: { fontSize: 13, color: ui.colors.textMuted, fontWeight: "600" },
-  value: { fontSize: 14, color: ui.colors.text, fontWeight: "700" },
+  label: { fontSize: 13, color: "#444", fontWeight: "600" },
+  value: { fontSize: 14, color: "#111", fontWeight: "700" },
 });
