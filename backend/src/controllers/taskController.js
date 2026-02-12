@@ -1,6 +1,6 @@
 const Request = require("../models/Request");
 const { computeIsOverdue } = require("../utils/sla");
-const { saveUploadedFilesToMongo } = require("../utils/upload");
+const { fileUrlFromFilename } = require("../utils/upload");
 
 function map(doc) {
   const cat = doc.categoryId && typeof doc.categoryId === "object" ? doc.categoryId : null;
@@ -29,7 +29,7 @@ function map(doc) {
 }
 
 async function listTasks(_env, req, res) {
-  const docs = await Request.find({ workerId: req.user.id, status: { $in: ["ASSIGNED", "IN_PROGRESS"] } })
+  const docs = await Request.find({ workerId: req.user.id, status: { $in: ["ASSIGNED", "IN_PROGRESS", "DONE"] } })
     .sort({ createdAt: -1 })
     .populate("categoryId");
   const now = new Date();
@@ -70,7 +70,7 @@ async function completeTask(_env, req, res) {
   if (!doc.workerId || doc.workerId.toString() !== req.user.id) return res.status(403).json({ error: "Forbidden" });
 
   const afterFiles = req.files?.after;
-  const afterUrls = await saveUploadedFilesToMongo(afterFiles, req);
+  const afterUrls = Array.isArray(afterFiles) ? afterFiles.map((f) => fileUrlFromFilename(f.filename, req)) : [];
   if (afterUrls.length === 0) return res.status(400).json({ error: "photosAfter is required" });
 
   doc.photosAfter = [...doc.photosAfter, ...afterUrls];
