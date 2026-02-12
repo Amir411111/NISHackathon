@@ -1,7 +1,8 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { AIAssistant } from "@/components/AIAssistant";
 import { Button } from "@/components/Buttons";
 import { CategorySelector } from "@/components/CategorySelector";
 import { Field, Input } from "@/components/Form";
@@ -22,8 +23,6 @@ export default function CitizenNewRequestScreen() {
   const [location, setLocation] = useState<RequestLocation | undefined>();
   const [priority, setPriority] = useState<RequestPriority>("MEDIUM");
   const [busy, setBusy] = useState(false);
-
-  const canSubmit = useMemo(() => description.trim().length >= 8 && Boolean(photoUri) && Boolean(location), [description, photoUri, location]);
 
   async function submit() {
     if (description.trim().length < 8) {
@@ -89,9 +88,20 @@ export default function CitizenNewRequestScreen() {
         <LocationPicker value={location} onChange={setLocation} />
       </Field>
 
+      <AIAssistant
+        role="CITIZEN"
+        citizen={{
+          description,
+          hasPhoto: Boolean(photoUri),
+          hasLocation: Boolean(location),
+          photoUri,
+          onApplyDescription: setDescription,
+        }}
+      />
+
       <View style={{ height: 6 }} />
 
-      <Button onPress={submit} disabled={!canSubmit} loading={busy}>
+      <Button onPress={submit} disabled={busy} loading={busy}>
         Отправить
       </Button>
     </Screen>

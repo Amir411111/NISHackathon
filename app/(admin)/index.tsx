@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { AIAssistant } from "@/components/AIAssistant";
 import { Button } from "@/components/Buttons";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
@@ -8,6 +9,7 @@ import { useNow } from "@/hooks/useNow";
 import { adminAssign, adminListAll } from "@/services/requestService";
 import { getWorkers } from "@/services/workerService";
 import { useAppStore } from "@/store/useAppStore";
+import { requestDisplayName } from "@/utils/requestPresentation";
 
 export default function AdminDispatcherScreen() {
   const now = useNow(1000);
@@ -63,6 +65,8 @@ export default function AdminDispatcherScreen() {
   return (
     <Screen scroll={false}>
       <ScrollView contentContainerStyle={styles.list}>
+        <AIAssistant role="ADMIN" admin={{ requests, workers, now, isOverdue }} />
+
         <SectionTitle text="Не выполненные" count={incompleteRequests.length} />
         {incompleteRequests.length === 0 ? <Text style={styles.empty}>Нет активных задач</Text> : null}
         {incompleteRequests.map((item) => {
@@ -100,7 +104,7 @@ export default function AdminDispatcherScreen() {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Назначение исполнителя (mock dropdown)</Text>
             {selectedRequest ? (
-              <Text style={styles.modalSub}>Заявка: {selectedRequest.id}</Text>
+              <Text style={styles.modalSub}>Заявка: {requestDisplayName(selectedRequest)}</Text>
             ) : null}
 
             <View style={styles.workerList}>

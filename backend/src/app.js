@@ -9,6 +9,7 @@ const { buildRequestRoutes } = require("./routes/requestRoutes");
 const { buildTaskRoutes } = require("./routes/taskRoutes");
 const { buildAnalyticsRoutes } = require("./routes/analyticsRoutes");
 const { buildWorkerRoutes } = require("./routes/workerRoutes");
+const { buildAiRoutes } = require("./routes/aiRoutes");
 const { streamUploadFromMongo } = require("./utils/upload");
 const { ensureSystemCategories } = require("./controllers/requestController");
 const { me } = require("./controllers/authController");
@@ -51,6 +52,7 @@ function createApp(env) {
   app.use("/tasks", buildTaskRoutes(env));
   app.use("/analytics", buildAnalyticsRoutes(env));
   app.use("/workers", buildWorkerRoutes(env));
+  app.use("/ai", buildAiRoutes(env));
 
   // bootstrap system categories lazily
   app.post("/admin/bootstrap", async (req, res) => {

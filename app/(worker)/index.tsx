@@ -1,7 +1,9 @@
+import * as Location from "expo-location";
 import { Link } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { AIAssistant } from "@/components/AIAssistant";
 import { HotspotsMap } from "@/components/HotspotsMap";
 import { RequestCard } from "@/components/RequestCard";
 import { Screen } from "@/components/Screen";
@@ -12,6 +14,7 @@ import { useAppStore } from "@/store/useAppStore";
 
 export default function WorkerWorklistScreen() {
   const now = useNow(1000);
+  const [workerLocation, setWorkerLocation] = useState<{ lat: number; lon: number }>();
   const requests = useAppStore((s) => s.requests);
   const user = useAppStore((s) => s.user);
   const workers = useAppStore((s) => s.workers);
@@ -60,6 +63,24 @@ export default function WorkerWorklistScreen() {
     };
   }, [replaceWorkers]);
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const perm = await Location.requestForegroundPermissionsAsync();
+        if (!perm.granted || !alive) return;
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (!alive) return;
+        setWorkerLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      } catch {
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <Screen scroll={false}>
       <FlatList
@@ -87,6 +108,8 @@ export default function WorkerWorklistScreen() {
                 <MetricBadge label="Просрочено" value={overdue} danger />
               </View>
             </View>
+
+            <AIAssistant role="WORKER" worker={{ tasks, now, isOverdue, workerLocation }} />
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Карта задач исполнителя</Text>

@@ -42,6 +42,7 @@ npm run dev
 ### Auth
 - `POST /auth/register` { email, password, role }
 - `POST /auth/login` { email, password }
+- `POST /ai/assistant` { role, message, context, imageDataUrl? } (JWT required)
 
 ### Citizen
 - `POST /requests` (multipart: before[], поля category/description/priority/lat/lng)
@@ -64,3 +65,5 @@ npm run dev
 ## Примечания
 - SLA рассчитывается при создании заявки (`priority` влияет на дедлайн)
 - `isOverdue` пересчитывается при выдаче списков задач/заявок
+- Для AI-ассистента добавьте `OPENAI_API_KEY` в `backend/.env` (опционально `OPENAI_MODEL`)
+- Для распознавания фото можно отдельно задать `OPENAI_VISION_MODEL` (по умолчанию `gpt-4.1-mini`)

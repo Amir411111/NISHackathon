@@ -1,9 +1,9 @@
 import { apiClient } from "@/api/client";
 import { clearSession, loadSession, saveSession, type StoredSession } from "@/api/tokenStorage";
 import type { UserRole } from "@/types/domain";
-import { Platform } from "react-native";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import { Platform } from "react-native";
 
 type BackendRole = "citizen" | "worker" | "admin";
 

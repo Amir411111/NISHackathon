@@ -1,3 +1,4 @@
+export * as aiService from "@/services/aiService";
 export * as authService from "@/services/authService";
 export * as categoryService from "@/services/categoryService";
 export * as requestService from "@/services/requestService";
