@@ -25,7 +25,7 @@ function createApp(env) {
     })
   );
 
-  app.use(express.json({ limit: "2mb" }));
+  app.use(express.json({ limit: "8mb" }));
 
   app.get("/uploads/:id", (req, res) => streamUploadFromMongo(req.params.id, res));
 

@@ -10,6 +10,7 @@ import { Screen } from "@/components/Screen";
 import { StatusTimeline } from "@/components/Status";
 import { ui } from "@/constants/ui";
 import { useNow } from "@/hooks/useNow";
+import { analyzeWorkPhotos, type WorkAnalysisResult } from "@/services/aiService";
 import { citizenConfirm, citizenReject } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -28,6 +29,8 @@ export default function CitizenRequestDetailsScreen() {
   const [confirming, setConfirming] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [rating, setRating] = useState<number>(5);
+  const [analyzingPhotos, setAnalyzingPhotos] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<WorkAnalysisResult | null>(null);
 
   if (!request) {
     return (
@@ -41,6 +44,11 @@ export default function CitizenRequestDetailsScreen() {
   }
 
   const requestId = request.id;
+  const beforePhotoUri = request.beforePhotoUri || request.photoUri;
+  const afterPhotoUri = request.afterPhotoUri;
+  const requestCategory = request.category;
+  const requestDescription = request.description;
+  const requestStatus = request.status;
 
   const worker = getWorkerById(request.assignedWorkerId);
   const canCitizenDecide = request.status === "DONE" && !request.citizenConfirmedAt;
@@ -79,6 +87,58 @@ export default function CitizenRequestDetailsScreen() {
     sendRework(requestId);
   }
 
+  async function toDataUrl(uri: string): Promise<string> {
+    if (uri.startsWith("data:image/")) return uri;
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("READ_IMAGE_FAILED"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function onAnalyzeWork() {
+    if (!beforePhotoUri || !afterPhotoUri) {
+      Alert.alert("Недостаточно данных", "Для анализа нужны оба фото: до и после.");
+      return;
+    }
+    if (beforePhotoUri.startsWith("mock://") || afterPhotoUri.startsWith("mock://")) {
+      Alert.alert("Недоступно", "AI-анализ недоступен для mock-фото.");
+      return;
+    }
+
+    try {
+      setAnalyzingPhotos(true);
+      setAiAnalysis(null);
+
+      const beforeImageDataUrl = await toDataUrl(beforePhotoUri);
+      const afterImageDataUrl = await toDataUrl(afterPhotoUri);
+
+      const analysis = await analyzeWorkPhotos({
+        beforeImageDataUrl,
+        afterImageDataUrl,
+        context: {
+          requestId,
+          category: requestCategory,
+          description: requestDescription,
+          status: requestStatus,
+        },
+      });
+
+      setAiAnalysis(analysis);
+      setRating(analysis.suggestedRating);
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || e?.message || "Не удалось проанализировать фото.";
+      Alert.alert("Ошибка AI", String(msg));
+    } finally {
+      setAnalyzingPhotos(false);
+    }
+  }
+
   return (
     <Screen>
       <RequestCard request={request} worker={worker} overdue={overdue} />
@@ -97,6 +157,22 @@ export default function CitizenRequestDetailsScreen() {
 
       {canCitizenDecide ? (
         <Section title="Действия жителя">
+          <Button onPress={onAnalyzeWork} variant="secondary" loading={analyzingPhotos} disabled={analyzingPhotos || confirming || rejecting}>
+            🤖 Анализировать фото до/после
+          </Button>
+
+          {aiAnalysis ? (
+            <View style={[styles.aiAnalysisBox, aiAnalysis.recommendation === "REWORK" && styles.aiAnalysisBoxWarning]}>
+              <Text style={styles.aiAnalysisTitle}>Результат AI-анализа</Text>
+              <Text style={styles.aiAnalysisText}>{aiAnalysis.answer}</Text>
+              <Text style={[styles.aiRecommendation, aiAnalysis.recommendation === "REWORK" ? styles.aiRecommendationWarn : styles.aiRecommendationOk]}>
+                Рекомендация: {aiAnalysis.recommendation === "REWORK" ? "Отправить на доработку" : "Можно подтвердить"}
+              </Text>
+              <Text style={styles.aiMeta}>Рекомендуемая оценка: {aiAnalysis.suggestedRating}★</Text>
+              <Text style={styles.aiMeta}>Уверенность анализа: {aiAnalysis.confidence === "CLEAR" ? "Высокая" : "Низкая (видимость ограничена)"}</Text>
+            </View>
+          ) : null}
+
           <Text style={styles.rateLabel}>Оцените работу исполнителя *</Text>
           <View style={styles.rateRow}>
             {[1, 2, 3, 4, 5].map((v) => (
@@ -178,6 +254,23 @@ const styles = StyleSheet.create({
   mockText: { fontWeight: "900", color: ui.colors.textMuted },
   rateLabel: { fontSize: 13, fontWeight: "800", color: ui.colors.text },
   rateRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  aiAnalysisBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
+    padding: 10,
+    gap: 6,
+  },
+  aiAnalysisBoxWarning: {
+    borderColor: ui.colors.warning,
+  },
+  aiAnalysisTitle: { fontSize: 13, fontWeight: "900", color: ui.colors.primary },
+  aiAnalysisText: { fontSize: 13, lineHeight: 18, color: ui.colors.text, fontWeight: "600" },
+  aiRecommendation: { fontSize: 13, fontWeight: "900" },
+  aiRecommendationWarn: { color: ui.colors.warning },
+  aiRecommendationOk: { color: ui.colors.primary },
+  aiMeta: { fontSize: 12, fontWeight: "700", color: ui.colors.textMuted },
   confirmed: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.primarySoft },
   confirmedText: { fontWeight: "900", color: ui.colors.primary },
   confirmedRate: { marginTop: 6, fontWeight: "800", color: ui.colors.text },
