@@ -1,4 +1,5 @@
 import { Stack, router } from "expo-router";
+import { View } from "react-native";
 
 import { HeaderButton } from "@/components/HeaderButton";
 import { ui } from "@/constants/ui";
@@ -21,7 +22,12 @@ export default function AdminLayout() {
         name="index"
         options={{
           title: "Диспетчер",
-          headerRight: () => <HeaderButton title="Профиль" onPress={() => router.push("/(admin)/user")} />,
+          headerRight: () => (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <HeaderButton title="Сводка" onPress={() => router.push("/(admin)/dashboard")} />
+              <HeaderButton title="Профиль" onPress={() => router.push("/(admin)/user")} />
+            </View>
+          ),
           headerLeft: () => (
             <HeaderButton
               title="Выйти"

@@ -5,13 +5,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { HotspotsMap } from "@/components/HotspotsMap";
 import { Screen } from "@/components/Screen";
 import { ui } from "@/constants/ui";
-import { analyticsSummary } from "@/services/requestService";
+import { adminListAll, analyticsSummary } from "@/services/requestService";
 import { getWorkers } from "@/services/workerService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function AdminDashboardScreen() {
   const requests = useAppStore((s) => s.requests);
   const workers = useAppStore((s) => s.workers);
+  const replaceRequests = useAppStore((s) => s.replaceRequests);
   const replaceWorkers = useAppStore((s) => s.replaceWorkers);
   const avgClosure = useAppStore((s) => s.getAverageClosureMinutes());
 
@@ -31,6 +32,21 @@ export default function AdminDashboardScreen() {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    adminListAll()
+      .then((items) => {
+        if (!alive) return;
+        replaceRequests(items);
+      })
+      .catch(() => {
+        // keep fallback from store
+      });
+    return () => {
+      alive = false;
+    };
+  }, [replaceRequests]);
 
   useEffect(() => {
     let alive = true;
