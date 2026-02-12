@@ -127,6 +127,13 @@ export default function CitizenRequestDetailsScreen() {
           <Text style={styles.confirmedRate}>Оценка исполнителю: {request.citizenRating ?? 5} / 5</Text>
         </View>
       ) : null}
+
+      {request.status === "REJECTED" ? (
+        <View style={styles.rejected}>
+          <Text style={styles.rejectedText}>Заявка отклонена диспетчером</Text>
+          <Text style={styles.rejectedMeta}>Списано баллов: {request.adminPenaltyPoints ?? 0}</Text>
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -162,4 +169,7 @@ const styles = StyleSheet.create({
   confirmed: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.border, backgroundColor: ui.colors.primarySoft },
   confirmedText: { fontWeight: "900", color: ui.colors.primary },
   confirmedRate: { marginTop: 6, fontWeight: "800", color: ui.colors.text },
+  rejected: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: ui.colors.danger, backgroundColor: ui.colors.dangerSoft },
+  rejectedText: { fontWeight: "900", color: ui.colors.danger },
+  rejectedMeta: { marginTop: 6, fontWeight: "800", color: ui.colors.text },
 });

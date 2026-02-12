@@ -14,6 +14,7 @@ function markerColor(r: Request, mode: ColorMode) {
   }
 
   if (r.status === "DONE") return ui.colors.primary;
+  if (r.status === "REJECTED") return ui.colors.danger;
   if (r.status === "IN_PROGRESS") return "#8fbf9d";
   if (r.status === "ASSIGNED") return "#d2a15a";
   return "#ce6a67";
@@ -68,6 +69,7 @@ export function HotspotsMap(props: { requests: Request[]; colorBy?: ColorMode })
             <LegendDot color="#d2a15a" label="Назначена" />
             <LegendDot color="#8fbf9d" label="В работе" />
             <LegendDot color="#56b37a" label="Выполнена" />
+            <LegendDot color={ui.colors.danger} label="Отклонена" />
           </>
         )}
       </View>

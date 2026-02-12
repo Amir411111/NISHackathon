@@ -7,6 +7,7 @@ const {
   citizenReject,
   adminListAll,
   adminAssign,
+  adminReject,
 } = require("../controllers/requestController");
 const { upload } = require("../utils/upload");
 
@@ -27,6 +28,7 @@ function buildRequestRoutes(env) {
   // Admin
   r.get("/", requireRole("admin"), (req, res) => adminListAll(env, req, res));
   r.post("/:id/assign", requireRole("admin"), (req, res) => adminAssign(env, req, res));
+  r.post("/:id/admin-reject", requireRole("admin"), (req, res) => adminReject(env, req, res));
 
   return r;
 }

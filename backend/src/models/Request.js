@@ -22,7 +22,7 @@ const RequestSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ["ACCEPTED", "ASSIGNED", "IN_PROGRESS", "DONE"],
+      enum: ["ACCEPTED", "ASSIGNED", "IN_PROGRESS", "DONE", "REJECTED"],
       default: "ACCEPTED",
     },
 
@@ -30,7 +30,7 @@ const RequestSchema = new mongoose.Schema(
       type: [
         new mongoose.Schema(
           {
-            status: { type: String, required: true, enum: ["ACCEPTED", "ASSIGNED", "IN_PROGRESS", "DONE"] },
+            status: { type: String, required: true, enum: ["ACCEPTED", "ASSIGNED", "IN_PROGRESS", "DONE", "REJECTED"] },
             at: { type: Date, required: true },
             by: { type: String, required: true, enum: ["citizen", "worker", "admin"] },
           },
@@ -51,6 +51,8 @@ const RequestSchema = new mongoose.Schema(
     workEndedAt: { type: Date, default: null },
     citizenConfirmedAt: { type: Date, default: null },
     citizenRating: { type: Number, default: null, min: 1, max: 5 },
+    adminRejectedAt: { type: Date, default: null },
+    adminPenaltyPoints: { type: Number, default: null, min: 0, max: 100 },
     reworkCount: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }

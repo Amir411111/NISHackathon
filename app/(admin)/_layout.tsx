@@ -34,6 +34,7 @@ export default function AdminLayout() {
         }}
       />
       <Stack.Screen name="dashboard" options={{ title: "Сводка" }} />
+      <Stack.Screen name="requests/[id]" options={{ title: "Заявка (только чтение)" }} />
       <Stack.Screen name="user" options={{ title: "Профиль" }} />
     </Stack>
   );

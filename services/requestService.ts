@@ -25,6 +25,8 @@ type RequestDto = {
   workEndedAt?: string | null;
   citizenConfirmedAt?: string | null;
   citizenRating?: number | null;
+  adminRejectedAt?: string | null;
+  adminPenaltyPoints?: number | null;
   reworkCount: number;
 };
 
@@ -77,6 +79,8 @@ function mapDto(dto: RequestDto): Request {
     reworkCount: dto.reworkCount ?? 0,
     citizenConfirmedAt: dto.citizenConfirmedAt ? new Date(dto.citizenConfirmedAt).getTime() : undefined,
     citizenRating: typeof dto.citizenRating === "number" ? dto.citizenRating : undefined,
+    adminRejectedAt: dto.adminRejectedAt ? new Date(dto.adminRejectedAt).getTime() : undefined,
+    adminPenaltyPoints: typeof dto.adminPenaltyPoints === "number" ? dto.adminPenaltyPoints : undefined,
     workStartedAt: dto.workStartedAt ? new Date(dto.workStartedAt).getTime() : undefined,
     workEndedAt: dto.workEndedAt ? new Date(dto.workEndedAt).getTime() : undefined,
   };
@@ -181,6 +185,11 @@ export async function adminListAll(): Promise<Request[]> {
 
 export async function adminAssign(requestId: string, workerId: string): Promise<Request> {
   const res = await apiClient.post<{ item: RequestDto }>(`/requests/${requestId}/assign`, { workerId });
+  return mapDto(res.data.item);
+}
+
+export async function adminReject(requestId: string, penaltyPoints: number): Promise<Request> {
+  const res = await apiClient.post<{ item: RequestDto }>(`/requests/${requestId}/admin-reject`, { penaltyPoints });
   return mapDto(res.data.item);
 }
 

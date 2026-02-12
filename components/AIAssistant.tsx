@@ -261,7 +261,7 @@ function buildAnswer(props: Props, rawQuestion: string) {
   const ctx = props.admin;
   if (!ctx) return "Проверьте активные задачи и рейтинг исполнителей перед назначением.";
 
-  const pending = ctx.requests.filter((r) => r.status !== "DONE");
+  const pending = ctx.requests.filter((r) => r.status !== "DONE" && r.status !== "REJECTED");
   const unassigned = pending.filter((r) => !r.assignedWorkerId);
   const target = (unassigned.length ? unassigned : pending).sort((a, b) => scoreTask(b, ctx.now, ctx.isOverdue) - scoreTask(a, ctx.now, ctx.isOverdue))[0];
 

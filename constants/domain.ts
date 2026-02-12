@@ -11,6 +11,7 @@ export const STATUS_STEPS: Array<{ value: RequestStatus; label: string }> = [
   { value: "ASSIGNED", label: "Назначен" },
   { value: "IN_PROGRESS", label: "В работе" },
   { value: "DONE", label: "Выполнено" },
+  { value: "REJECTED", label: "Отклонено" },
 ];
 
 export const PRIORITIES = [

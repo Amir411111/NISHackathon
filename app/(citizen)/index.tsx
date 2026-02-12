@@ -1,5 +1,5 @@
 import { Link, router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Buttons";
@@ -12,12 +12,16 @@ import { getMyRequests } from "@/services/requestService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function CitizenRequestsScreen() {
+  type CitizenTab = "ACTIVE" | "PENDING_CONFIRM" | "CLOSED";
+
   const now = useNow(1000);
   const requests = useAppStore((s) => s.requests);
   const replaceRequests = useAppStore((s) => s.replaceRequests);
+  const syncMe = useAppStore((s) => s.syncMe);
   const getWorkerById = useAppStore((s) => s.getWorkerById);
   const isOverdue = useAppStore((s) => s.isRequestOverdue);
   const points = useAppStore((s) => s.citizenPoints);
+  const [selectedTab, setSelectedTab] = useState<CitizenTab>("ACTIVE");
 
   useEffect(() => {
     let alive = true;
@@ -25,6 +29,7 @@ export default function CitizenRequestsScreen() {
       .then((items) => {
         if (!alive) return;
         replaceRequests(items);
+        syncMe().catch(() => {});
       })
       .catch(() => {
         // stay compatible with mock-only mode
@@ -32,11 +37,23 @@ export default function CitizenRequestsScreen() {
     return () => {
       alive = false;
     };
-  }, [replaceRequests]);
+  }, [replaceRequests, syncMe]);
 
   const hasBadge = points >= ACTIVE_CITIZEN_BADGE_THRESHOLD;
-  const incompleteRequests = requests.filter((r) => r.status !== "DONE");
-  const completedRequests = requests.filter((r) => r.status === "DONE");
+  const activeRequests = useMemo(() => requests.filter((r) => r.status !== "DONE" && r.status !== "REJECTED"), [requests]);
+  const pendingConfirmationRequests = useMemo(() => requests.filter((r) => r.status === "DONE" && !r.citizenConfirmedAt), [requests]);
+  const closedRequests = useMemo(() => requests.filter((r) => (r.status === "DONE" && Boolean(r.citizenConfirmedAt)) || r.status === "REJECTED"), [requests]);
+
+  const tabItems = useMemo(
+    () => [
+      { key: "ACTIVE" as const, title: "Активные", count: activeRequests.length },
+      { key: "PENDING_CONFIRM" as const, title: "Ждут подтверждения", count: pendingConfirmationRequests.length },
+      { key: "CLOSED" as const, title: "Закрытые", count: closedRequests.length },
+    ],
+    [activeRequests.length, pendingConfirmationRequests.length, closedRequests.length]
+  );
+
+  const visibleRequests = selectedTab === "ACTIVE" ? activeRequests : selectedTab === "PENDING_CONFIRM" ? pendingConfirmationRequests : closedRequests;
 
   return (
     <Screen scroll={false}>
@@ -52,23 +69,18 @@ export default function CitizenRequestsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list}>
-        <SectionTitle text="Не выполненные" count={incompleteRequests.length} />
-        {incompleteRequests.length === 0 ? <Text style={styles.empty}>Нет активных заявок</Text> : null}
-        {incompleteRequests.map((item) => {
-          const worker = getWorkerById(item.assignedWorkerId);
-          const overdue = isOverdue(item, now);
-          return (
-            <Link key={item.id} href={`/(citizen)/requests/${item.id}`} asChild>
-              <Pressable>
-                <RequestCard request={item} worker={worker} overdue={overdue} />
-              </Pressable>
-            </Link>
-          );
-        })}
+        <View style={styles.tabsRow}>
+          {tabItems.map((tab) => (
+            <Pressable key={tab.key} onPress={() => setSelectedTab(tab.key)} style={[styles.tabChip, selectedTab === tab.key && styles.tabChipActive]}>
+              <Text style={[styles.tabChipText, selectedTab === tab.key && styles.tabChipTextActive]}>{tab.title}</Text>
+              <Text style={[styles.tabChipCount, selectedTab === tab.key && styles.tabChipCountActive]}>{tab.count}</Text>
+            </Pressable>
+          ))}
+        </View>
 
-        <SectionTitle text="Выполненные" count={completedRequests.length} />
-        {completedRequests.length === 0 ? <Text style={styles.empty}>Выполненных заявок пока нет</Text> : null}
-        {completedRequests.map((item) => {
+        <SectionTitle text={selectedTab === "ACTIVE" ? "Активные заявки" : selectedTab === "PENDING_CONFIRM" ? "Выполнены, ждут подтверждения" : "Закрытые заявки"} count={visibleRequests.length} />
+        {visibleRequests.length === 0 ? <Text style={styles.empty}>Пока нет заявок в этой вкладке</Text> : null}
+        {visibleRequests.map((item) => {
           const worker = getWorkerById(item.assignedWorkerId);
           const overdue = isOverdue(item, now);
           return (
@@ -100,6 +112,23 @@ const styles = StyleSheet.create({
   badge: { fontSize: 12, fontWeight: "800", color: ui.colors.textMuted },
   badgeActive: { color: ui.colors.primary },
   list: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
+  tabsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tabChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surfaceMuted,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  tabChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
+  tabChipText: { color: ui.colors.textMuted, fontSize: 12, fontWeight: "800" },
+  tabChipTextActive: { color: ui.colors.primary },
+  tabChipCount: { color: ui.colors.textMuted, fontSize: 12, fontWeight: "900" },
+  tabChipCountActive: { color: ui.colors.primary },
   sectionHead: {
     marginTop: 8,
     flexDirection: "row",

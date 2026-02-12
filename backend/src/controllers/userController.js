@@ -21,7 +21,7 @@ async function getMeProfile(_env, req, res) {
   const [requestsCreated, requestsConfirmed, requestsActive, tasksCompleted, usersAhead] = await Promise.all([
     Request.countDocuments({ citizenId: user._id }),
     Request.countDocuments({ citizenId: user._id, citizenConfirmedAt: { $ne: null } }),
-    Request.countDocuments({ citizenId: user._id, status: { $ne: "DONE" } }),
+    Request.countDocuments({ citizenId: user._id, status: { $nin: ["DONE", "REJECTED"] } }),
     Request.countDocuments({ workerId: user._id, status: "DONE" }),
     User.countDocuments({ role: user.role, points: { $gt: user.points } }),
   ]);

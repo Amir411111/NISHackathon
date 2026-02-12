@@ -47,6 +47,8 @@ function mapRequestDoc(doc) {
     workEndedAt: doc.workEndedAt,
     citizenConfirmedAt: doc.citizenConfirmedAt,
     citizenRating: doc.citizenRating,
+    adminRejectedAt: doc.adminRejectedAt,
+    adminPenaltyPoints: doc.adminPenaltyPoints,
     reworkCount: doc.reworkCount,
   };
 }
@@ -189,11 +191,50 @@ async function adminAssign(_env, req, res) {
 
   const doc = await Request.findById(id);
   if (!doc) return res.status(404).json({ error: "Not found" });
+  if (doc.status === "DONE" || doc.status === "REJECTED") {
+    return res.status(400).json({ error: "Closed request cannot be assigned" });
+  }
 
   doc.workerId = workerId;
   doc.status = "ASSIGNED";
   doc.statusHistory = [...(doc.statusHistory || []), { status: "ASSIGNED", at: new Date(), by: "admin" }];
   await doc.save();
+
+  const populated = await Request.findById(id).populate("categoryId");
+  return res.json({ item: mapRequestDoc(populated) });
+}
+
+async function adminReject(_env, req, res) {
+  const id = req.params.id;
+  const penaltyRaw = req.body?.penaltyPoints;
+  const penaltyPoints = Number(penaltyRaw);
+
+  if (!Number.isInteger(penaltyPoints) || penaltyPoints < 0 || penaltyPoints > 100) {
+    return res.status(400).json({ error: "penaltyPoints must be integer in range 0..100" });
+  }
+
+  const doc = await Request.findById(id);
+  if (!doc) return res.status(404).json({ error: "Not found" });
+  if (doc.status === "DONE" || doc.status === "REJECTED") {
+    return res.status(400).json({ error: "Closed request cannot be rejected" });
+  }
+
+  const now = new Date();
+  doc.status = "REJECTED";
+  doc.workerId = null;
+  doc.workStartedAt = null;
+  doc.workEndedAt = null;
+  doc.adminRejectedAt = now;
+  doc.adminPenaltyPoints = penaltyPoints;
+  doc.statusHistory = [...(doc.statusHistory || []), { status: "REJECTED", at: now, by: "admin" }];
+  await doc.save();
+
+  const citizen = await User.findById(doc.citizenId);
+  if (citizen) {
+    const currentPoints = Number.isFinite(citizen.points) ? citizen.points : 0;
+    citizen.points = Math.max(0, currentPoints - penaltyPoints);
+    await citizen.save();
+  }
 
   const populated = await Request.findById(id).populate("categoryId");
   return res.json({ item: mapRequestDoc(populated) });
@@ -206,5 +247,6 @@ module.exports = {
   citizenReject,
   adminListAll,
   adminAssign,
+  adminReject,
   ensureSystemCategories,
 };

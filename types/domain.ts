@@ -2,7 +2,7 @@ export type UserRole = "CITIZEN" | "WORKER" | "ADMIN";
 
 export type Category = "LIGHTING" | "TRASH" | "ROAD";
 
-export type RequestStatus = "ACCEPTED" | "ASSIGNED" | "IN_PROGRESS" | "DONE";
+export type RequestStatus = "ACCEPTED" | "ASSIGNED" | "IN_PROGRESS" | "DONE" | "REJECTED";
 
 export type SLAStatus = "OK" | "OVERDUE";
 
@@ -61,6 +61,8 @@ export type Request = {
   reworkCount: number;
   citizenConfirmedAt?: number;
   citizenRating?: number;
+  adminRejectedAt?: number;
+  adminPenaltyPoints?: number;
 
   workStartedAt?: number;
   workEndedAt?: number;

@@ -5,11 +5,20 @@ import { formatDateTime } from "@/utils/time";
 import { StyleSheet, Text, View } from "react-native";
 
 export function StatusBar(props: { status: RequestStatus }) {
-  const activeIndex = STATUS_STEPS.findIndex((s) => s.value === props.status);
+  if (props.status === "REJECTED") {
+    return (
+      <View style={styles.rejectedWrap}>
+        <Text style={styles.rejectedText}>Отклонено диспетчером</Text>
+      </View>
+    );
+  }
+
+  const linearSteps = STATUS_STEPS.filter((s) => s.value !== "REJECTED");
+  const activeIndex = linearSteps.findIndex((s) => s.value === props.status);
 
   return (
     <View style={styles.row}>
-      {STATUS_STEPS.map((s, idx) => {
+      {linearSteps.map((s, idx) => {
         const isActive = idx <= activeIndex;
         return (
           <View key={s.value} style={styles.step}>
@@ -47,6 +56,14 @@ function roleLabel(r: string) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
+  rejectedWrap: {
+    borderRadius: 999,
+    alignSelf: "flex-start",
+    backgroundColor: ui.colors.dangerSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  rejectedText: { color: ui.colors.danger, fontSize: 12, fontWeight: "900" },
   step: { flex: 1, alignItems: "center", gap: 6 },
   dot: { width: 10, height: 10, borderRadius: 10, backgroundColor: "#d7dbe0" },
   dotActive: { backgroundColor: ui.colors.primary },
