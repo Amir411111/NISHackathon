@@ -30,8 +30,6 @@ export default function LoginScreen() {
   const [errorText, setErrorText] = useState("");
   const [hintText, setHintText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false);
   const methodSwitchAnim = useRef(new Animated.Value(1)).current;
   const [segmentWidth, setSegmentWidth] = useState(0);
 
@@ -254,40 +252,30 @@ export default function LoginScreen() {
         )}
 
         <Field label="Пароль">
-          <View style={styles.inputRow}>
-            <TextInput
-              value={password}
-              onChangeText={(v) => {
-                setPassword(v);
-                setErrorText("");
-              }}
-              secureTextEntry={!passwordVisible}
-              placeholder="Пароль"
-              style={[styles.input, styles.inputGrow]}
-            />
-            <Pressable onPress={() => setPasswordVisible((v) => !v)} style={styles.showBtn}>
-              <Text style={styles.showBtnText}>Показать</Text>
-            </Pressable>
-          </View>
+          <TextInput
+            value={password}
+            onChangeText={(v) => {
+              setPassword(v);
+              setErrorText("");
+            }}
+            secureTextEntry
+            placeholder="Пароль"
+            style={styles.input}
+          />
         </Field>
 
         {mode === "register" ? (
           <Field label="Подтвердите пароль">
-            <View style={styles.inputRow}>
-              <TextInput
-                value={confirmPassword}
-                onChangeText={(v) => {
-                  setConfirmPassword(v);
-                  setErrorText("");
-                }}
-                secureTextEntry={!confirmVisible}
-                placeholder="Подтвердите пароль"
-                style={[styles.input, styles.inputGrow]}
-              />
-              <Pressable onPress={() => setConfirmVisible((v) => !v)} style={styles.showBtn}>
-                <Text style={styles.showBtnText}>Показать</Text>
-              </Pressable>
-            </View>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={(v) => {
+                setConfirmPassword(v);
+                setErrorText("");
+              }}
+              secureTextEntry
+              placeholder="Подтвердите пароль"
+              style={styles.input}
+            />
           </Field>
         ) : null}
 
@@ -433,10 +421,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: ui.colors.text,
   },
-  inputGrow: { flex: 1 },
-  inputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  showBtn: { paddingHorizontal: 8, paddingVertical: 6 },
-  showBtnText: { color: ui.colors.primary, fontSize: 13, fontWeight: "700" },
 
   summary: { padding: 12, borderRadius: 14, backgroundColor: ui.colors.surfaceMuted, borderWidth: 1, borderColor: ui.colors.border },
   key: { marginTop: 8, fontSize: 12, fontWeight: "900", color: ui.colors.text },

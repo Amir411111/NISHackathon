@@ -63,32 +63,32 @@ export default function CitizenRequestsScreen() {
 
   return (
     <Screen scroll={false}>
-      <View style={styles.top}>
-        {overdueMine.length > 0 ? (
-          <View style={[styles.slaBanner, styles.slaDanger]}>
-            <Text style={styles.slaTitle}>SLA уведомление</Text>
-            <Text style={styles.slaText}>Есть просроченные заявки: {overdueMine.length}. Диспетчер уже уведомлён.</Text>
-          </View>
-        ) : null}
+      <ScrollView contentContainerStyle={styles.list}>
+        <View style={styles.top}>
+          {overdueMine.length > 0 ? (
+            <View style={[styles.slaBanner, styles.slaDanger]}>
+              <Text style={styles.slaTitle}>SLA уведомление</Text>
+              <Text style={styles.slaText}>Есть просроченные заявки: {overdueMine.length}. Диспетчер уже уведомлён.</Text>
+            </View>
+          ) : null}
 
-        {overdueMine.length === 0 && nearDeadlineMine.length > 0 ? (
-          <View style={[styles.slaBanner, styles.slaWarn]}>
-            <Text style={styles.slaTitle}>SLA уведомление</Text>
-            <Text style={styles.slaText}>По {nearDeadlineMine.length} заявкам дедлайн скоро истечёт.</Text>
-          </View>
-        ) : null}
+          {overdueMine.length === 0 && nearDeadlineMine.length > 0 ? (
+            <View style={[styles.slaBanner, styles.slaWarn]}>
+              <Text style={styles.slaTitle}>SLA уведомление</Text>
+              <Text style={styles.slaText}>По {nearDeadlineMine.length} заявкам дедлайн скоро истечёт.</Text>
+            </View>
+          ) : null}
 
-        <View style={styles.gamification}>
-          <Text style={styles.points}>Баллы: {points}</Text>
-          <Text style={[styles.badge, hasBadge && styles.badgeActive]}>
-            {hasBadge ? "🏅 Активный житель" : `До badge: ${ACTIVE_CITIZEN_BADGE_THRESHOLD - points}`}
-          </Text>
+          <View style={styles.gamification}>
+            <Text style={styles.points}>Баллы: {points}</Text>
+            <Text style={[styles.badge, hasBadge && styles.badgeActive]}>
+              {hasBadge ? "🏅 Активный житель" : `До badge: ${ACTIVE_CITIZEN_BADGE_THRESHOLD - points}`}
+            </Text>
+          </View>
+
+          <Button onPress={() => router.push("/(citizen)/new")}>Создать заявку</Button>
         </View>
 
-        <Button onPress={() => router.push("/(citizen)/new")}>Создать заявку</Button>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.list}>
         <View style={styles.overviewCard}>
           <Text style={styles.overviewTitle}>Мои заявки</Text>
           <Text style={styles.overviewSub}>Выберите фильтр: активные, ждут подтверждения или закрытые.</Text>
