@@ -1,5 +1,6 @@
 import { apiClient } from "@/api/client";
 import type { UserRole } from "@/types/domain";
+import axios from "axios";
 
 type BackendRole = "citizen" | "worker" | "admin";
 
@@ -34,6 +35,7 @@ export type UserStats = {
   requestsActive: number;
   tasksCompleted: number;
   avgCloseMinutes: number | null;
+  activity: Array<{ date: string; count: number }>;
 };
 
 type ProfileResponse = {
@@ -73,6 +75,7 @@ export async function getMyProfile(): Promise<{ user: UserProfile; stats: UserSt
       requestsActive: 0,
       tasksCompleted: 0,
       avgCloseMinutes: null,
+      activity: [],
     },
   };
 }
@@ -107,10 +110,17 @@ export type LeaderboardItem = {
   email: string;
   role: UserRole;
   points: number;
+  ratingAvg?: number;
+  ratingCount?: number;
 };
 
+const publicApiClient = axios.create({
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  timeout: 15000,
+});
+
 export async function getLeaderboard(limit = 20, role?: UserRole): Promise<{ items: LeaderboardItem[]; meRank: number | null }> {
-  const res = await apiClient.get<{ items: Array<{ rank: number; id: string; fullName: string; email: string; role: BackendRole; points: number }>; meRank: number | null }>(
+  const res = await apiClient.get<{ items: Array<{ rank: number; id: string; fullName: string; email: string; role: BackendRole; points: number; ratingAvg?: number; ratingCount?: number }>; meRank: number | null }>(
     "/users/leaderboard",
     { params: { role: role ? roleToBackend(role) : undefined, limit } }
   );
@@ -124,6 +134,29 @@ export async function getLeaderboard(limit = 20, role?: UserRole): Promise<{ ite
       email: item.email,
       role: roleFromBackend(item.role),
       points: item.points,
+      ratingAvg: item.ratingAvg,
+      ratingCount: item.ratingCount,
+    })),
+  };
+}
+
+export async function getPublicLeaderboard(limit = 20, role?: UserRole): Promise<{ items: LeaderboardItem[]; meRank: number | null }> {
+  const res = await publicApiClient.get<{ items: Array<{ rank: number; id: string; fullName: string; email: string; role: BackendRole; points: number; ratingAvg?: number; ratingCount?: number }>; meRank: number | null }>(
+    "/public/leaderboard",
+    { params: { role: role ? roleToBackend(role) : undefined, limit } }
+  );
+
+  return {
+    meRank: res.data.meRank,
+    items: res.data.items.map((item) => ({
+      rank: item.rank,
+      id: item.id,
+      fullName: item.fullName,
+      email: item.email,
+      role: roleFromBackend(item.role),
+      points: item.points,
+      ratingAvg: item.ratingAvg,
+      ratingCount: item.ratingCount,
     })),
   };
 }

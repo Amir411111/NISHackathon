@@ -24,7 +24,8 @@ export default function WorkerLayout() {
         options={{
           title: "Рабочий лист",
           headerRight: () => (
-            <View style={{ marginRight: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginRight: 8 }}>
+              <HeaderButton compact icon="trophy-outline" onPress={() => router.push("/(worker)/leaderboard")} />
               <HeaderButton compact icon="person" onPress={() => router.push("/(worker)/user")} />
             </View>
           ),
@@ -44,6 +45,7 @@ export default function WorkerLayout() {
       />
       <Stack.Screen name="tasks/[id]" options={{ title: "Выполнение" }} />
       <Stack.Screen name="user" options={{ title: "Профиль" }} />
+      <Stack.Screen name="leaderboard" options={{ title: "Рейтинг" }} />
     </Stack>
   );
 }

@@ -27,6 +27,7 @@ export default function AdminLayout() {
           headerRight: () => (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginRight: 8 }}>
               <HeaderButton compact icon="stats-chart" onPress={() => router.push("/(admin)/dashboard")} />
+              <HeaderButton compact icon="trophy-outline" onPress={() => router.push("/(admin)/leaderboard")} />
               <HeaderButton compact icon="person" onPress={() => router.push("/(admin)/user")} />
             </View>
           ),
@@ -47,6 +48,7 @@ export default function AdminLayout() {
       <Stack.Screen name="dashboard" options={{ title: "Сводка" }} />
       <Stack.Screen name="requests/[id]" options={{ title: "Заявка (только чтение)" }} />
       <Stack.Screen name="user" options={{ title: "Профиль" }} />
+      <Stack.Screen name="leaderboard" options={{ title: "Рейтинг" }} />
     </Stack>
   );
 }

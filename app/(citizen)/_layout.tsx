@@ -24,7 +24,8 @@ export default function CitizenLayout() {
         options={{
           title: "eQala",
           headerRight: () => (
-            <View style={{ marginRight: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginRight: 8 }}>
+              <HeaderButton compact icon="trophy-outline" onPress={() => router.push("/(citizen)/leaderboard")} />
               <HeaderButton compact icon="person" onPress={() => router.push("/(citizen)/user")} />
             </View>
           ),
@@ -45,6 +46,7 @@ export default function CitizenLayout() {
       <Stack.Screen name="new" options={{ title: "Подать заявку" }} />
       <Stack.Screen name="requests/[id]" options={{ title: "Заявка" }} />
       <Stack.Screen name="user" options={{ title: "Профиль" }} />
+      <Stack.Screen name="leaderboard" options={{ title: "Рейтинг" }} />
     </Stack>
   );
 }

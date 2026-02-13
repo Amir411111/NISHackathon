@@ -11,6 +11,7 @@ const { buildAnalyticsRoutes } = require("./routes/analyticsRoutes");
 const { buildWorkerRoutes } = require("./routes/workerRoutes");
 const { buildAiRoutes } = require("./routes/aiRoutes");
 const { buildUserRoutes } = require("./routes/userRoutes");
+const { publicLeaderboard } = require("./controllers/userController");
 const { streamUploadFromMongo } = require("./utils/upload");
 const { ensureSystemCategories } = require("./controllers/requestController");
 const { me } = require("./controllers/authController");
@@ -42,6 +43,7 @@ function createApp(env) {
 
   // Auth routes: /register and /login are public.
   app.use("/auth", buildAuthRoutes(env));
+  app.get("/public/leaderboard", (req, res) => publicLeaderboard(env, req, res));
 
   // Protected routes
   app.use(authMiddleware(env));

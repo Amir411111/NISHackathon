@@ -1,14 +1,44 @@
 import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
-import { useRef } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Screen } from "@/components/Screen";
 import { ui } from "@/constants/ui";
+import { getPublicLeaderboard, type LeaderboardItem } from "@/services/userService";
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const [leaderboardTab, setLeaderboardTab] = useState<"USERS" | "WORKERS">("USERS");
+  const [leaderboardItems, setLeaderboardItems] = useState<LeaderboardItem[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    setLeaderboardLoading(true);
+    setLeaderboardItems([]);
+
+    (async () => {
+      try {
+        const role = leaderboardTab === "WORKERS" ? "WORKER" : "CITIZEN";
+        const res = await getPublicLeaderboard(5, role);
+        if (!alive) return;
+        setLeaderboardItems(res.items || []);
+      } catch {
+        if (!alive) return;
+        setLeaderboardItems([]);
+      } finally {
+        if (!alive) return;
+        setLeaderboardLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [leaderboardTab]);
 
   const actionsProgress = scrollY.interpolate({
     inputRange: [0, 90],
@@ -100,6 +130,40 @@ export default function WelcomeScreen() {
             <ListItem text="Фото-подтверждение работ и контроль сроков" />
             <ListItem text="Меньше звонков и бумажных обращений" />
             <ListItem text="Единое окно для жителя, исполнителя и акимата" />
+          </SectionCard>
+
+          <SectionCard title="Рейтинг активности">
+            <View style={styles.leaderboardTabs}>
+              <Pressable
+                style={[styles.leaderboardTab, leaderboardTab === "USERS" && styles.leaderboardTabActive]}
+                onPress={() => setLeaderboardTab("USERS")}
+              >
+                <Text style={[styles.leaderboardTabText, leaderboardTab === "USERS" && styles.leaderboardTabTextActive]}>Рейтинг пользователей</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.leaderboardTab, leaderboardTab === "WORKERS" && styles.leaderboardTabActive]}
+                onPress={() => setLeaderboardTab("WORKERS")}
+              >
+                <Text style={[styles.leaderboardTabText, leaderboardTab === "WORKERS" && styles.leaderboardTabTextActive]}>Рейтинг рабочих</Text>
+              </Pressable>
+            </View>
+
+            {leaderboardLoading ? (
+              <View style={styles.leaderboardLoaderWrap}>
+                <ActivityIndicator color={ui.colors.primary} />
+              </View>
+            ) : null}
+            {!leaderboardLoading && leaderboardItems.length === 0 ? <Text style={styles.infoText}>Пока нет данных</Text> : null}
+            {!leaderboardLoading && leaderboardItems.map((item) => (
+              <View key={item.id} style={styles.leaderboardRow}>
+                <Text style={styles.leaderboardRank}>#{item.rank}</Text>
+                <View style={styles.leaderboardUserCol}>
+                  <Text style={styles.leaderboardName}>{item.fullName}</Text>
+                  <Text style={styles.leaderboardEmail}>{item.email}</Text>
+                </View>
+                <Text style={styles.leaderboardPoints}>{leaderboardTab === "WORKERS" ? `${(item.ratingAvg ?? 0).toFixed(1)}★` : item.points}</Text>
+              </View>
+            ))}
           </SectionCard>
 
           <View style={styles.spacer} />
@@ -315,6 +379,28 @@ const styles = StyleSheet.create({
     color: ui.colors.text,
     fontWeight: "700",
   },
+  leaderboardTabs: { flexDirection: "row", gap: 8 },
+  leaderboardTab: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: ui.radius.md,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  leaderboardTabActive: { backgroundColor: ui.colors.primary, borderColor: ui.colors.primary },
+  leaderboardTabText: { fontSize: 12, fontWeight: "900", color: ui.colors.textMuted, textAlign: "center" },
+  leaderboardTabTextActive: { color: ui.colors.surface },
+  leaderboardLoaderWrap: { minHeight: 64, alignItems: "center", justifyContent: "center" },
+  leaderboardRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 3 },
+  leaderboardRank: { minWidth: 32, fontSize: 12, fontWeight: "900", color: ui.colors.text },
+  leaderboardUserCol: { flex: 1, gap: 1 },
+  leaderboardName: { fontSize: 13, fontWeight: "900", color: ui.colors.text },
+  leaderboardEmail: { fontSize: 12, color: ui.colors.textMuted },
+  leaderboardPoints: { fontSize: 13, fontWeight: "900", color: ui.colors.text },
   spacer: {
     flex: 1,
   },

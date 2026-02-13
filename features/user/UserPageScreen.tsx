@@ -4,12 +4,14 @@ import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button } from "@/components/Buttons";
 import { Field, Input } from "@/components/Form";
 import { Screen } from "@/components/Screen";
-import { changeMyPassword, getLeaderboard, getMyProfile, updateMyProfile, type LeaderboardItem, type UserStats } from "@/services/userService";
+import { ui } from "@/constants/ui";
+import { changeMyPassword, getMyProfile, updateMyProfile, type UserStats } from "@/services/userService";
 import { useAppStore } from "@/store/useAppStore";
 
 export default function UserPageScreen() {
   const me = useAppStore((s) => s.user);
   const syncMe = useAppStore((s) => s.syncMe);
+  const role = me?.role;
 
   const [fullName, setFullName] = useState(me?.fullName || "");
   const [savingProfile, setSavingProfile] = useState(false);
@@ -21,20 +23,18 @@ export default function UserPageScreen() {
 
   const [stats, setStats] = useState<UserStats | null>(null);
   const [rank, setRank] = useState<number | null>(null);
-  const [items, setItems] = useState<LeaderboardItem[]>([]);
 
   useEffect(() => {
     let alive = true;
 
     (async () => {
       try {
-        const [profile, leaderboard] = await Promise.all([getMyProfile(), getLeaderboard(10, me?.role)]);
+        const profile = await getMyProfile();
         if (!alive) return;
 
         setFullName(profile.user.fullName || "");
         setStats(profile.stats);
-        setRank(profile.user.rank ?? leaderboard.meRank ?? null);
-        setItems(leaderboard.items || []);
+        setRank(profile.user.rank ?? null);
       } catch {
         // keep fallback values from store
       }
@@ -132,32 +132,60 @@ export default function UserPageScreen() {
         <Button onPress={savePassword} loading={savingPassword} disabled={!canChangePassword || savingPassword}>Изменить пароль</Button>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.title}>Моя статистика</Text>
-        <Metric label="Место в рейтинге" value={rank ? `#${rank}` : "—"} />
-        <Metric label="Создано заявок" value={String(stats?.requestsCreated ?? 0)} />
-        <Metric label="Подтверждено" value={String(stats?.requestsConfirmed ?? 0)} />
-        <Metric label="Активных заявок" value={String(stats?.requestsActive ?? 0)} />
-        <Metric label="Завершено задач (как исполнитель)" value={String(stats?.tasksCompleted ?? 0)} />
-        <Metric label="Среднее закрытие" value={stats?.avgCloseMinutes == null ? "—" : `${stats.avgCloseMinutes} мин`} />
-      </View>
+      {role !== "ADMIN" ? (
+        <View style={styles.card}>
+          <Text style={styles.title}>Моя статистика</Text>
+          <Metric label="Место в рейтинге" value={rank ? `#${rank}` : "—"} />
 
-      <View style={styles.card}>
-        <Text style={styles.title}>Рейтинг пользователей</Text>
-        {items.length === 0 ? <Text style={styles.empty}>Пока нет данных</Text> : null}
-        {items.map((item) => (
-          <View key={item.id} style={styles.row}>
-            <Text style={styles.rank}>#{item.rank}</Text>
-            <View style={styles.userCol}>
-              <Text style={styles.name}>{item.fullName}</Text>
-              <Text style={styles.email}>{item.email}</Text>
-            </View>
-            <Text style={styles.points}>{item.points}</Text>
-          </View>
-        ))}
-      </View>
+          {role === "WORKER" ? (
+            <>
+              <Metric label="Активных задач" value={String(stats?.requestsActive ?? 0)} />
+              <Metric label="Завершено задач" value={String(stats?.tasksCompleted ?? 0)} />
+              <Metric label="Среднее закрытие" value={stats?.avgCloseMinutes == null ? "—" : `${stats.avgCloseMinutes} мин`} />
+            </>
+          ) : null}
+
+          {role === "CITIZEN" ? (
+            <>
+              <Metric label="Создано заявок" value={String(stats?.requestsCreated ?? 0)} />
+              <Metric label="Подтверждено" value={String(stats?.requestsConfirmed ?? 0)} />
+              <Metric label="Активных заявок" value={String(stats?.requestsActive ?? 0)} />
+            </>
+          ) : null}
+        </View>
+      ) : null}
+
+      {role === "CITIZEN" ? (
+        <View style={styles.card}>
+          <Text style={styles.title}>Активности</Text>
+          <Text style={styles.meta}>Подтвержденные и закрытые задачи по дням</Text>
+          <ActivityHeatmap data={stats?.activity || []} />
+        </View>
+      ) : null}
     </Screen>
   );
+}
+
+function ActivityHeatmap(props: { data: Array<{ date: string; count: number }> }) {
+  const values = props.data.map((item) => item.count);
+  const max = values.length ? Math.max(...values) : 0;
+
+  return (
+    <View style={styles.heatmapWrap}>
+      {props.data.map((item) => (
+        <View key={item.date} style={[styles.cell, cellColor(item.count, max)]} />
+      ))}
+    </View>
+  );
+}
+
+function cellColor(count: number, max: number) {
+  if (count <= 0) return styles.cell0;
+  if (max <= 1) return styles.cell3;
+  const ratio = count / max;
+  if (ratio < 0.34) return styles.cell1;
+  if (ratio < 0.67) return styles.cell2;
+  return styles.cell3;
 }
 
 function Metric(props: { label: string; value: string }) {
@@ -186,11 +214,16 @@ const styles = StyleSheet.create({
   metric: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
   metricLabel: { fontSize: 13, fontWeight: "700", color: "#666" },
   metricValue: { fontSize: 13, fontWeight: "900", color: "#111" },
-  empty: { fontSize: 12, color: "#666", fontWeight: "700" },
-  row: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4 },
-  rank: { minWidth: 34, fontSize: 12, fontWeight: "900", color: "#111" },
-  userCol: { flex: 1, gap: 2 },
-  name: { fontSize: 13, fontWeight: "900", color: "#111" },
-  email: { fontSize: 12, color: "#666" },
-  points: { fontSize: 13, fontWeight: "900", color: "#111" },
+  heatmapWrap: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
+  cell: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+  },
+  cell0: { backgroundColor: ui.colors.surfaceMuted },
+  cell1: { backgroundColor: ui.colors.primarySoft },
+  cell2: { backgroundColor: ui.colors.primary },
+  cell3: { backgroundColor: ui.colors.primary },
 });
