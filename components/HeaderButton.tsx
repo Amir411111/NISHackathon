@@ -15,7 +15,7 @@ export function HeaderButton(props: { title?: string; icon?: IconName; onPress: 
       style={({ pressed }) => [styles.btn, props.compact && styles.btnCompact, iconOnly && styles.btnIconOnly, pressed && styles.pressed]}
     >
       <View style={styles.row}>
-        {props.icon ? <Ionicons name={props.icon} size={props.compact ? 14 : 16} color={ui.colors.primary} /> : null}
+        {props.icon ? <Ionicons name={props.icon} size={props.compact ? 18 : 20} color={ui.colors.primary} /> : null}
         {props.title ? <Text style={[styles.text, props.compact && styles.textCompact]}>{props.title}</Text> : null}
       </View>
     </Pressable>
@@ -24,9 +24,9 @@ export function HeaderButton(props: { title?: string; icon?: IconName; onPress: 
 
 const styles = StyleSheet.create({
   btn: {
-    minHeight: 32,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    minHeight: 38,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: ui.colors.border,
@@ -35,13 +35,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   btnCompact: {
-    minHeight: 28,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   btnIconOnly: {
-    minWidth: 28,
-    paddingHorizontal: 6,
+    minWidth: 34,
+    paddingHorizontal: 8,
   },
   row: {
     flexDirection: "row",

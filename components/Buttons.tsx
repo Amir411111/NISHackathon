@@ -10,9 +10,10 @@ type Props = PropsWithChildren<{
   disabled?: boolean;
   loading?: boolean;
   variant?: ButtonVariant;
+  size?: "default" | "compact";
 }>;
 
-export function Button({ onPress, disabled, loading, variant = "primary", children }: Props) {
+export function Button({ onPress, disabled, loading, variant = "primary", size = "default", children }: Props) {
   const isDisabled = disabled || loading;
 
   return (
@@ -21,6 +22,7 @@ export function Button({ onPress, disabled, loading, variant = "primary", childr
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
+        size === "compact" && styles.baseCompact,
         styles[variant],
         isDisabled && styles.disabled,
         pressed && !isDisabled && styles.pressed,
@@ -31,6 +33,7 @@ export function Button({ onPress, disabled, loading, variant = "primary", childr
         <Text
           style={[
             styles.textBase,
+            size === "compact" && styles.textCompact,
             variant === "secondary" ? styles.textSecondary : variant === "danger" ? styles.textDanger : styles.textPrimary,
           ]}
         >
@@ -50,6 +53,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  baseCompact: {
+    minHeight: 42,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
   pressed: { opacity: 0.9 },
   disabled: { opacity: 0.5 },
@@ -57,6 +65,7 @@ const styles = StyleSheet.create({
   secondary: { backgroundColor: ui.colors.surfaceMuted, borderWidth: 1, borderColor: ui.colors.border },
   danger: { backgroundColor: ui.colors.dangerSoft, borderWidth: 1, borderColor: "#f3c7c7" },
   textBase: { fontSize: 16, fontWeight: "600" },
+  textCompact: { fontSize: 14, fontWeight: "700" },
   textPrimary: { color: ui.colors.surface },
   textSecondary: { color: ui.colors.primary },
   textDanger: { color: ui.colors.danger },

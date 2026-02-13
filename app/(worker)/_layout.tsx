@@ -1,4 +1,5 @@
 import { Stack, router } from "expo-router";
+import { View } from "react-native";
 
 import { HeaderButton } from "@/components/HeaderButton";
 import { ui } from "@/constants/ui";
@@ -11,6 +12,7 @@ export default function WorkerLayout() {
     <Stack
       screenOptions={{
         headerTitleAlign: "center",
+        headerBackTitle: "",
         headerStyle: { backgroundColor: ui.colors.surface },
         headerShadowVisible: false,
         headerTintColor: ui.colors.primary,
@@ -21,15 +23,22 @@ export default function WorkerLayout() {
         name="index"
         options={{
           title: "Рабочий лист",
-          headerRight: () => <HeaderButton title="Профиль" onPress={() => router.push("/(worker)/user")} />,
+          headerRight: () => (
+            <View style={{ marginRight: 8 }}>
+              <HeaderButton compact icon="person" onPress={() => router.push("/(worker)/user")} />
+            </View>
+          ),
           headerLeft: () => (
-            <HeaderButton
-              title="Выйти"
-              onPress={() => {
-                logout();
-                router.replace("/(auth)/login");
-              }}
-            />
+            <View style={{ marginLeft: 8 }}>
+              <HeaderButton
+                compact
+                icon="log-out-outline"
+                onPress={() => {
+                  logout();
+                  router.replace("/(auth)/login");
+                }}
+              />
+            </View>
           ),
         }}
       />

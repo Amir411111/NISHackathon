@@ -89,13 +89,16 @@ export default function CitizenRequestsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list}>
-        <View style={styles.tabsRow}>
-          {tabItems.map((tab) => (
-            <Pressable key={tab.key} onPress={() => setSelectedTab(tab.key)} style={[styles.tabChip, selectedTab === tab.key && styles.tabChipActive]}>
-              <Text style={[styles.tabChipText, selectedTab === tab.key && styles.tabChipTextActive]}>{tab.title}</Text>
-              <Text style={[styles.tabChipCount, selectedTab === tab.key && styles.tabChipCountActive]}>{tab.count}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.overviewCard}>
+          <Text style={styles.overviewTitle}>Мои заявки</Text>
+          <Text style={styles.overviewSub}>Выберите фильтр: активные, ждут подтверждения или закрытые.</Text>
+          <View style={styles.overviewStatsRow}>
+            {tabItems.map((tab) => (
+              <Pressable key={tab.key} onPress={() => setSelectedTab(tab.key)} style={styles.statPressable}>
+                <StatBadge label={tab.title} value={tab.count} tone={selectedTab === tab.key ? "primary" : "default"} />
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         <SectionTitle text={selectedTab === "ACTIVE" ? "Активные заявки" : selectedTab === "PENDING_CONFIRM" ? "Выполнены, ждут подтверждения" : "Закрытые заявки"} count={visibleRequests.length} />
@@ -125,6 +128,17 @@ function SectionTitle(props: { text: string; count: number }) {
   );
 }
 
+function StatBadge(props: { label: string; value: number; tone: "default" | "primary" }) {
+  return (
+    <View style={[styles.statBadge, props.tone === "primary" && styles.statBadgePrimary]}>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.statBadgeLabel, props.tone === "primary" && styles.statBadgeLabelPrimary]}>
+        {props.label}
+      </Text>
+      <Text style={[styles.statBadgeValue, props.tone === "primary" && styles.statBadgeValuePrimary]}>{props.value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   top: { padding: 16, gap: 12 },
   slaBanner: { borderRadius: 12, borderWidth: 1, padding: 10, gap: 2 },
@@ -137,23 +151,37 @@ const styles = StyleSheet.create({
   badge: { fontSize: 12, fontWeight: "800", color: ui.colors.textMuted },
   badgeActive: { color: ui.colors.primary },
   list: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
-  tabsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  tabChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 999,
+  overviewCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: ui.colors.border,
+    backgroundColor: ui.colors.surface,
+    padding: 12,
+    gap: 10,
+  },
+  overviewTitle: { fontSize: 18, fontWeight: "900", color: ui.colors.text },
+  overviewSub: { fontSize: 13, lineHeight: 18, fontWeight: "700", color: ui.colors.textMuted },
+  overviewStatsRow: { flexDirection: "row", gap: 8 },
+  statPressable: { flex: 1 },
+  statBadge: {
+    minHeight: 80,
+    justifyContent: "space-between",
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: ui.colors.border,
     backgroundColor: ui.colors.surfaceMuted,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 10,
+    gap: 2,
   },
-  tabChipActive: { borderColor: ui.colors.primary, backgroundColor: ui.colors.primarySoft },
-  tabChipText: { color: ui.colors.textMuted, fontSize: 12, fontWeight: "800" },
-  tabChipTextActive: { color: ui.colors.primary },
-  tabChipCount: { color: ui.colors.textMuted, fontSize: 12, fontWeight: "900" },
-  tabChipCountActive: { color: ui.colors.primary },
+  statBadgePrimary: {
+    borderColor: ui.colors.primary,
+    backgroundColor: ui.colors.primarySoft,
+  },
+  statBadgeLabel: { fontSize: 10, fontWeight: "800", color: ui.colors.textMuted },
+  statBadgeLabelPrimary: { color: ui.colors.primary },
+  statBadgeValue: { fontSize: 16, fontWeight: "900", color: ui.colors.text },
+  statBadgeValuePrimary: { color: ui.colors.primary },
   sectionHead: {
     marginTop: 8,
     flexDirection: "row",

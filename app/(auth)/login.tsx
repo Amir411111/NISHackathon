@@ -141,11 +141,11 @@ export default function LoginScreen() {
           <Text style={styles.closeText}>×</Text>
         </Pressable>
         <Pressable onPress={() => setMode(mode === "login" ? "register" : "login")} hitSlop={8}>
-          <Text style={styles.switchText}>{mode === "login" ? "Sign up" : "Login"}</Text>
+          <Text style={styles.switchText}>{mode === "login" ? "Регистрация" : "Вход"}</Text>
         </Pressable>
       </View>
 
-      <Text style={styles.h1}>{mode === "login" ? "Log In" : "Sign Up"}</Text>
+      <Text style={styles.h1}>{mode === "login" ? "Вход" : "Регистрация"}</Text>
 
       <View style={styles.formCard}>
         {mode === "login" ? (
@@ -173,20 +173,20 @@ export default function LoginScreen() {
               ]}
             />
             <ModeChip title="Digital ID" active={loginMethod === "digital-file"} onPress={() => setLoginMethod("digital-file")} />
-            <ModeChip title="Email" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
+            <ModeChip title="Почта" active={loginMethod === "email"} onPress={() => setLoginMethod("email")} />
           </View>
         ) : null}
 
         {mode === "login" ? (
           <View style={styles.methodWrap}>
             {loginMethod === "email" ? (
-              <Field label="Email">
+              <Field label="Почта">
                 <TextInput
                   value={identifier}
                   onChangeText={setIdentifier}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  placeholder="Email"
+                  placeholder="Почта"
                   style={styles.input}
                 />
               </Field>
@@ -228,7 +228,7 @@ export default function LoginScreen() {
                       ? selectedFile.name
                       : selectedNativeFile
                         ? selectedNativeFile.name || "digital-id.eqid"
-                        : "upload file"}
+                        : "загрузить файл"}
                   </Text>
                 </Pressable>
               </Field>
@@ -237,15 +237,15 @@ export default function LoginScreen() {
         ) : (
           <>
             <Field label="ФИО">
-              <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="Name" style={styles.input} />
+              <TextInput value={fullName} onChangeText={setFullName} autoCorrect={false} placeholder="ФИО" style={styles.input} />
             </Field>
-            <Field label="Email">
+            <Field label="Почта">
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder="Email"
+                placeholder="Почта"
                 style={styles.input}
               />
             </Field>
@@ -253,7 +253,7 @@ export default function LoginScreen() {
           </>
         )}
 
-        <Field label="Password">
+        <Field label="Пароль">
           <View style={styles.inputRow}>
             <TextInput
               value={password}
@@ -262,17 +262,17 @@ export default function LoginScreen() {
                 setErrorText("");
               }}
               secureTextEntry={!passwordVisible}
-              placeholder="Password"
+              placeholder="Пароль"
               style={[styles.input, styles.inputGrow]}
             />
             <Pressable onPress={() => setPasswordVisible((v) => !v)} style={styles.showBtn}>
-              <Text style={styles.showBtnText}>Show</Text>
+              <Text style={styles.showBtnText}>Показать</Text>
             </Pressable>
           </View>
         </Field>
 
         {mode === "register" ? (
-          <Field label="Confirm password">
+          <Field label="Подтвердите пароль">
             <View style={styles.inputRow}>
               <TextInput
                 value={confirmPassword}
@@ -281,11 +281,11 @@ export default function LoginScreen() {
                   setErrorText("");
                 }}
                 secureTextEntry={!confirmVisible}
-                placeholder="Confirm password"
+                placeholder="Подтвердите пароль"
                 style={[styles.input, styles.inputGrow]}
               />
               <Pressable onPress={() => setConfirmVisible((v) => !v)} style={styles.showBtn}>
-                <Text style={styles.showBtnText}>Show</Text>
+                <Text style={styles.showBtnText}>Показать</Text>
               </Pressable>
             </View>
           </Field>
@@ -328,7 +328,7 @@ export default function LoginScreen() {
 
       <View style={styles.submitWrap}>
         <Button onPress={proceed} disabled={!canProceed} loading={busy}>
-          {mode === "login" ? "Log In" : "Sign Up"}
+          {mode === "login" ? "Войти" : "Зарегистрироваться"}
         </Button>
       </View>
 

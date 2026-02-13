@@ -12,6 +12,7 @@ export default function AdminLayout() {
     <Stack
       screenOptions={{
         headerTitleAlign: "center",
+        headerBackTitle: "",
         headerStyle: { backgroundColor: ui.colors.surface },
         headerShadowVisible: false,
         headerTintColor: ui.colors.primary,

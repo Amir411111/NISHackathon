@@ -14,7 +14,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { requestDisplayName } from "@/utils/requestPresentation";
 
 export default function AdminDispatcherScreen() {
-  type AdminTab = "ACTIVE" | "OVERDUE" | "COMPLETED";
+  type AdminTab = "ACTIVE" | "OVERDUE" | "IN_REVIEW";
 
   const now = useNow(1000);
   const requests = useAppStore((s) => s.requests);
@@ -42,18 +42,18 @@ export default function AdminDispatcherScreen() {
   const selectedRequest = useMemo(() => (assignFor ? requests.find((r) => r.id === assignFor) : null), [assignFor, requests]);
   const activeRequests = useMemo(() => requests.filter((r) => r.status !== "DONE" && r.status !== "REJECTED"), [requests]);
   const overdueRequests = useMemo(() => activeRequests.filter((r) => isOverdue(r, now)), [activeRequests, isOverdue, now]);
-  const completedRequests = useMemo(() => requests.filter((r) => r.status === "DONE" || r.status === "REJECTED"), [requests]);
+  const inReviewRequests = useMemo(() => requests.filter((r) => r.status === "DONE" && !r.citizenConfirmedAt), [requests]);
 
   const tabItems = useMemo(
     () => [
       { key: "ACTIVE" as const, title: "Активные", count: activeRequests.length },
       { key: "OVERDUE" as const, title: "Просроченные", count: overdueRequests.length },
-      { key: "COMPLETED" as const, title: "Завершенные", count: completedRequests.length },
+      { key: "IN_REVIEW" as const, title: "В рассмотрении", count: inReviewRequests.length },
     ],
-    [activeRequests.length, overdueRequests.length, completedRequests.length]
+    [activeRequests.length, overdueRequests.length, inReviewRequests.length]
   );
 
-  const visibleRequests = selectedTab === "ACTIVE" ? activeRequests : selectedTab === "OVERDUE" ? overdueRequests : completedRequests;
+  const visibleRequests = selectedTab === "ACTIVE" ? activeRequests : selectedTab === "OVERDUE" ? overdueRequests : inReviewRequests;
 
   useEffect(() => {
     let alive = true;
@@ -102,7 +102,7 @@ export default function AdminDispatcherScreen() {
 
         <View style={styles.overviewCard}>
           <Text style={styles.overviewTitle}>Панель диспетчера</Text>
-          <Text style={styles.overviewSub}>Выберите фильтр: активные, просроченные или завершенные заявки.</Text>
+          <Text style={styles.overviewSub}>Выберите фильтр: активные, просроченные или заявки в рассмотрении.</Text>
           <View style={styles.overviewStatsRow}>
             {tabItems.map((tab) => (
               <Pressable key={tab.key} onPress={() => setSelectedTab(tab.key)} style={styles.statPressable}>
@@ -124,13 +124,13 @@ export default function AdminDispatcherScreen() {
               {selectedTab === "ACTIVE" ? (
                 <View style={styles.actionsRow}>
                   <View style={styles.actionBtnWrap}>
-                    <Button onPress={() => setAssignFor(item.id)} disabled={Boolean(assigningWorkerId) || rejecting}>
-                    Назначить исполнителя
+                    <Button size="compact" onPress={() => setAssignFor(item.id)} disabled={Boolean(assigningWorkerId) || rejecting}>
+                      Назначить
                     </Button>
                   </View>
                   <View style={styles.actionBtnWrap}>
-                    <Button onPress={() => setRejectFor(item.id)} variant="danger" disabled={Boolean(assigningWorkerId) || rejecting}>
-                      Отклонить заявку
+                    <Button size="compact" onPress={() => setRejectFor(item.id)} variant="danger" disabled={Boolean(assigningWorkerId) || rejecting}>
+                      Отклонить
                     </Button>
                   </View>
                 </View>
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   statBadgeValuePrimary: { color: ui.colors.primary },
   row: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
   requestBlock: { gap: 10 },
-  actionsRow: { flexDirection: "row", gap: 10 },
+  actionsRow: { flexDirection: "row", gap: 8 },
   actionBtnWrap: { flex: 1 },
   empty: { color: ui.colors.textMuted, fontWeight: "700", marginBottom: 4 },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)", alignItems: "center", justifyContent: "center", padding: 16 },
