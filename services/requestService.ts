@@ -60,6 +60,11 @@ function categoryFromBackendName(name?: string): Category {
   return "ROAD";
 }
 
+function getLastItem<T>(arr?: T[]): T | undefined {
+  if (!Array.isArray(arr) || arr.length === 0) return undefined;
+  return arr[arr.length - 1];
+}
+
 function normalizeMediaUrl(url?: string): string | undefined {
   if (!url) return undefined;
 
@@ -93,7 +98,7 @@ function normalizeMediaUrl(url?: string): string | undefined {
 
 function mapDto(dto: RequestDto): Request {
   const beforePhoto = normalizeMediaUrl(dto.photosBefore?.[0]);
-  const afterPhoto = normalizeMediaUrl(dto.photosAfter?.[0]);
+  const afterPhoto = normalizeMediaUrl(getLastItem(dto.photosAfter));
 
   return {
     id: dto.id,
